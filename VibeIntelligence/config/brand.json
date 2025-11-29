@@ -1,0 +1,55 @@
+{
+    "name": "VibeCaaS",
+    "tagline": "Code the Vibe. Deploy the Dream.",
+    "company": "NeuralQuantum.ai LLC",
+    "website": "https://vibecaas.com",
+    "colors": {
+        "primary": "#6D4AFF",
+        "secondary": "#14B8A6",
+        "accent": "#FF8C00",
+        "primaryRgb": "109, 74, 255",
+        "secondaryRgb": "20, 184, 166",
+        "accentRgb": "255, 140, 0",
+        "names": {
+            "primary": "Vibe Purple",
+            "secondary": "Aqua Teal",
+            "accent": "Signal Amber"
+        }
+    },
+    "fonts": {
+        "sans": "Inter",
+        "mono": "JetBrains Mono"
+    },
+    "voice": {
+        "tone": "Creative, empowering, upbeat",
+        "personality": [
+            "Technical but approachable",
+            "Energetic and rhythmic",
+            "Action-oriented",
+            "Smart, not snarky"
+        ],
+        "metaphors": [
+            "Music/flow references",
+            "Rhythm and beats",
+            "Mixing and composition",
+            "Tuning and harmony"
+        ]
+    },
+    "notifications": {
+        "enhance_success": "Your prompt is now in rhythm ✨",
+        "agent_success": "Tuned for AI agents 🎧",
+        "spec_success": "Expanded to full composition 📝",
+        "simplify_success": "Stripped to the beat 🎵",
+        "proofread_success": "Polished to perfection 💎",
+        "custom_success": "Custom vibe applied 🎨",
+        "processing": "Mixing your vibe...",
+        "error": "Hit a skip in the track. Let's retry.",
+        "api_error": "The vibe got interrupted. Check your connection.",
+        "success_generic": "Rewrite complete ✨"
+    },
+    "ui": {
+        "window_title": "VibeIntelligence",
+        "app_subtitle": "AI-Powered Text Enhancement",
+        "dock_tooltip": "VibeIntelligence - Transform your text with AI"
+    }
+}

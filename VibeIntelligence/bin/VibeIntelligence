@@ -1,0 +1,870 @@
+#!/bin/zsh
+
+# VibeIntelligence - AI-Powered Text Enhancement
+# Part of VibeCaaS.com - "Code the Vibe. Deploy the Dream."
+# © 2025 NeuralQuantum.ai LLC
+
+set -euo pipefail
+
+# ============================================================================
+# BRAND COLORS (ANSI 24-bit)
+# ============================================================================
+VIBE_PURPLE='\033[38;2;109;74;255m'
+AQUA_TEAL='\033[38;2;20;184;166m'
+SIGNAL_AMBER='\033[38;2;255;140;0m'
+RESET='\033[0m'
+BOLD='\033[1m'
+DIM='\033[2m'
+
+# ============================================================================
+# CONFIGURATION PATHS
+# ============================================================================
+# Get script directory (works in both bash and zsh)
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+    SCRIPT_DIR="${0:A:h}"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+fi
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+CONFIG_DIR="${HOME}/.config/VibeIntelligence"
+LOG_FILE="${PROJECT_DIR}/logs/VibeIntelligence.log"
+HISTORY_DIR="${CONFIG_DIR}/history"
+TEMPLATES_DIR="${CONFIG_DIR}/templates"
+BRAND_CONFIG="${CONFIG_DIR}/brand.json"
+USER_CONFIG="${CONFIG_DIR}/config.json"
+
+# ============================================================================
+# DEFAULT VALUES
+# ============================================================================
+VERSION="1.0.0"
+DEFAULT_MODE="enhance"
+DEFAULT_MODEL="claude-sonnet-4-20250514"
+DEFAULT_OUTPUT="clipboard"
+TIMEOUT=60
+
+# Runtime options
+MODE="$DEFAULT_MODE"
+OUTPUT_MODE="$DEFAULT_OUTPUT"
+NOTIFY=false
+QUIET=false
+SHOW_DIFF=false
+SAVE_HISTORY=true
+BRAND_CONTEXT=true
+CUSTOM_TEMPLATE=""
+INPUT_TEXT=""
+INPUT_FILE=""
+
+# ============================================================================
+# BRAND NOTIFICATION MESSAGES
+# ============================================================================
+NOTIFY_ENHANCE="Your prompt is now in rhythm ✨"
+NOTIFY_AGENT="Tuned for AI agents 🎧"
+NOTIFY_SPEC="Expanded to full composition 📝"
+NOTIFY_SIMPLIFY="Stripped to the beat 🎵"
+NOTIFY_PROOFREAD="Polished to perfection 💎"
+NOTIFY_CUSTOM="Custom vibe applied 🎨"
+NOTIFY_PROCESSING="Mixing your vibe..."
+NOTIFY_ERROR="Hit a skip in the track. Let's retry."
+
+# ============================================================================
+# LOGGING
+# ============================================================================
+log() {
+    local level="$1"
+    shift
+    local message="$*"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
+}
+
+log_info() { log "INFO" "$@"; }
+log_error() { log "ERROR" "$@"; }
+log_debug() { log "DEBUG" "$@"; }
+
+# ============================================================================
+# NOTIFICATIONS
+# ============================================================================
+notify() {
+    local title="$1"
+    local message="$2"
+    local sound="${3:-Glass}"
+    
+    if [[ "$NOTIFY" == true ]]; then
+        osascript -e "display notification \"$message\" with title \"$title\" sound name \"$sound\"" 2>/dev/null || true
+    fi
+}
+
+notify_success() {
+    local mode="$1"
+    case "$mode" in
+        enhance)   notify "VibeIntelligence" "$NOTIFY_ENHANCE" ;;
+        agent)     notify "VibeIntelligence" "$NOTIFY_AGENT" ;;
+        spec)      notify "VibeIntelligence" "$NOTIFY_SPEC" ;;
+        simplify)  notify "VibeIntelligence" "$NOTIFY_SIMPLIFY" ;;
+        proofread) notify "VibeIntelligence" "$NOTIFY_PROOFREAD" ;;
+        custom)    notify "VibeIntelligence" "$NOTIFY_CUSTOM" ;;
+        *)         notify "VibeIntelligence" "Rewrite complete ✨" ;;
+    esac
+}
+
+notify_error() {
+    notify "VibeIntelligence" "$NOTIFY_ERROR" "Basso"
+}
+
+notify_processing() {
+    if [[ "$NOTIFY" == true ]]; then
+        osascript -e "display notification \"$NOTIFY_PROCESSING\" with title \"VibeIntelligence\"" 2>/dev/null || true
+    fi
+}
+
+# ============================================================================
+# CONFIGURATION LOADING
+# ============================================================================
+load_config() {
+    # Load brand messages if available
+    if [[ -f "$BRAND_CONFIG" ]] && command -v jq &>/dev/null; then
+        NOTIFY_ENHANCE=$(jq -r '.notifications.enhance_success // empty' "$BRAND_CONFIG" 2>/dev/null) || NOTIFY_ENHANCE="Your prompt is now in rhythm ✨"
+        NOTIFY_AGENT=$(jq -r '.notifications.agent_success // empty' "$BRAND_CONFIG" 2>/dev/null) || NOTIFY_AGENT="Tuned for AI agents 🎧"
+        NOTIFY_SPEC=$(jq -r '.notifications.spec_success // empty' "$BRAND_CONFIG" 2>/dev/null) || NOTIFY_SPEC="Expanded to full composition 📝"
+        NOTIFY_SIMPLIFY=$(jq -r '.notifications.simplify_success // empty' "$BRAND_CONFIG" 2>/dev/null) || NOTIFY_SIMPLIFY="Stripped to the beat 🎵"
+        NOTIFY_PROCESSING=$(jq -r '.notifications.processing // empty' "$BRAND_CONFIG" 2>/dev/null) || NOTIFY_PROCESSING="Mixing your vibe..."
+        NOTIFY_ERROR=$(jq -r '.notifications.error // empty' "$BRAND_CONFIG" 2>/dev/null) || NOTIFY_ERROR="Hit a skip in the track. Let's retry."
+    fi
+    
+    # Load user config if available
+    if [[ -f "$USER_CONFIG" ]] && command -v jq &>/dev/null; then
+        local config_model=$(jq -r '.model // empty' "$USER_CONFIG" 2>/dev/null)
+        local config_mode=$(jq -r '.default_mode // empty' "$USER_CONFIG" 2>/dev/null)
+        local config_notify=$(jq -r '.notify // empty' "$USER_CONFIG" 2>/dev/null)
+        local config_history=$(jq -r '.history_enabled // empty' "$USER_CONFIG" 2>/dev/null)
+        local config_brand=$(jq -r '.brand_context // empty' "$USER_CONFIG" 2>/dev/null)
+        
+        [[ -n "$config_model" ]] && DEFAULT_MODEL="$config_model"
+        [[ -n "$config_mode" ]] && DEFAULT_MODE="$config_mode"
+        [[ "$config_notify" == "true" ]] && NOTIFY=true
+        [[ "$config_history" == "false" ]] && SAVE_HISTORY=false
+        [[ "$config_brand" == "false" ]] && BRAND_CONTEXT=false
+        
+        # Check for API key in config
+        local config_api_key=$(jq -r '.api_key // empty' "$USER_CONFIG" 2>/dev/null)
+        if [[ -n "$config_api_key" && -z "${ANTHROPIC_API_KEY:-}" ]]; then
+            export ANTHROPIC_API_KEY="$config_api_key"
+        fi
+    fi
+}
+
+# ============================================================================
+# SYSTEM PROMPTS
+# ============================================================================
+get_system_prompt() {
+    local mode="$1"
+    
+    case "$mode" in
+        enhance)
+            cat << 'EOF'
+You are VibeIntelligence, an expert prompt engineer built by VibeCaaS.com ("Code the Vibe. Deploy the Dream.").
+
+Your voice is creative, empowering, and action-oriented—technical but approachable.
+
+Rewrite the following text to be more comprehensive, clear, and robust. Add:
+- Explicit requirements and acceptance criteria
+- Edge cases to consider
+- Clear structure with sections if needed
+- Specific details that were implied but not stated
+
+Maintain the original intent but make it unambiguous and actionable.
+Keep the energy up—this should feel like a well-composed track, not a dry spec sheet.
+
+Output ONLY the rewritten text, no explanations.
+EOF
+            ;;
+        agent)
+            cat << 'EOF'
+You are VibeIntelligence, an expert prompt engineer built by VibeCaaS.com ("Code the Vibe. Deploy the Dream.").
+
+Transform this text into a well-structured prompt optimized for AI coding agents (Cursor, Claude Code, GitHub Copilot, Windsurf).
+
+Structure the output with:
+## Task: [Clear, action-oriented title]
+### Goal
+[1-2 sentence objective—make it punchy]
+
+### Requirements
+[Numbered list of specific requirements with these sub-categories:]
+1. **Core Functionality**
+   - [Specific requirement]
+2. **UI/UX** (if applicable)
+   - [Specific requirement]
+3. **Data & State**
+   - [Specific requirement]
+4. **Error Handling**
+   - [Specific requirement]
+
+### Technical Constraints
+- Stack/framework preferences
+- Patterns to follow
+- Limitations to respect
+
+### Edge Cases
+- [What to handle]
+- [Failure scenarios]
+
+### Output Format
+- Expected deliverable (files, structure)
+- Code style preferences
+- Testing expectations
+
+### Verification Checklist
+Before completing, verify:
+- [ ] [Specific check]
+- [ ] [Specific check]
+
+Be specific about error handling, types, and testing expectations.
+Make it actionable—ready to ship, not just to read.
+
+Output ONLY the structured prompt, no meta-commentary.
+EOF
+            ;;
+        spec)
+            cat << 'EOF'
+You are VibeIntelligence, a technical architect from VibeCaaS.com ("Code the Vibe. Deploy the Dream.").
+
+Expand this into a detailed technical specification. Structure it as:
+
+# [Feature/System Name] - Technical Specification
+*VibeCaaS Technical Document*
+
+## Overview
+[High-level description and objectives]
+
+## Functional Requirements
+### FR-1: [Requirement Name]
+- Description:
+- Acceptance Criteria:
+- Priority: [P0/P1/P2]
+
+## Non-Functional Requirements
+### Performance
+- [Specific metrics]
+
+### Security
+- [Security considerations]
+
+### Scalability
+- [Scale requirements]
+
+## Data Model
+[Schemas, entities, relationships if applicable]
+
+## API Contract
+[Endpoints, request/response formats if applicable]
+
+## Error Handling Strategy
+[Error types, recovery mechanisms]
+
+## Testing Requirements
+- Unit tests:
+- Integration tests:
+- E2E tests:
+
+## Dependencies
+[External services, libraries]
+
+## Open Questions
+[Items needing clarification]
+
+Output ONLY the specification document, no explanations.
+EOF
+            ;;
+        simplify)
+            cat << 'EOF'
+You are VibeIntelligence, a technical writer from VibeCaaS.com ("Code the Vibe. Deploy the Dream.").
+
+Simplify and clarify this text:
+- Remove redundancy—keep only what moves the needle
+- Use plain language—technical accuracy without jargon overload
+- Improve readability—short sentences, clear structure
+- Keep all essential information
+- Fix any grammar issues
+
+Think of it like stripping a track to its essential beat.
+
+Output ONLY the simplified text.
+EOF
+            ;;
+        proofread)
+            cat << 'EOF'
+You are VibeIntelligence from VibeCaaS.com.
+
+Proofread this text:
+- Fix spelling and grammar errors
+- Improve punctuation
+- Fix awkward phrasing
+- Maintain the original voice and intent
+- Make minimal changes—just clean it up
+
+Output ONLY the corrected text.
+EOF
+            ;;
+        custom)
+            # Load custom template
+            if [[ -n "$CUSTOM_TEMPLATE" && -f "$CUSTOM_TEMPLATE" ]]; then
+                # Skip YAML frontmatter if present
+                sed '1{/^---$/!q;};1,/^---$/d' "$CUSTOM_TEMPLATE"
+            elif [[ -n "$CUSTOM_TEMPLATE" && -f "${TEMPLATES_DIR}/${CUSTOM_TEMPLATE}" ]]; then
+                sed '1{/^---$/!q;};1,/^---$/d' "${TEMPLATES_DIR}/${CUSTOM_TEMPLATE}"
+            elif [[ -n "$CUSTOM_TEMPLATE" && -f "${TEMPLATES_DIR}/${CUSTOM_TEMPLATE}.md" ]]; then
+                sed '1{/^---$/!q;};1,/^---$/d' "${TEMPLATES_DIR}/${CUSTOM_TEMPLATE}.md"
+            else
+                echo "Error: Custom template not found: $CUSTOM_TEMPLATE" >&2
+                exit 1
+            fi
+            ;;
+        *)
+            echo "Unknown mode: $mode" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# ============================================================================
+# API INTEGRATION
+# ============================================================================
+check_api_key() {
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+        echo "${SIGNAL_AMBER}Error: ANTHROPIC_API_KEY not set${RESET}" >&2
+        echo "" >&2
+        echo "Set your API key:" >&2
+        echo "  ${BOLD}export ANTHROPIC_API_KEY='your-key-here'${RESET}" >&2
+        echo "" >&2
+        echo "Or add it to ${USER_CONFIG}" >&2
+        notify "VibeIntelligence" "API key not configured. Check settings." "Basso"
+        exit 1
+    fi
+}
+
+call_api() {
+    local system_prompt="$1"
+    local user_text="$2"
+    
+    # Check for Claude CLI first
+    if command -v claude &>/dev/null; then
+        log_debug "Using Claude CLI"
+        echo "$user_text" | claude --print --system "$system_prompt" 2>/dev/null
+        return $?
+    fi
+    
+    # Fallback to curl with Anthropic API
+    check_api_key
+    
+    log_debug "Using Anthropic API directly"
+    
+    # Escape the text for JSON
+    local escaped_system=$(echo "$system_prompt" | jq -Rs .)
+    local escaped_user=$(echo "$user_text" | jq -Rs .)
+    
+    local response=$(curl -s --max-time "$TIMEOUT" \
+        -H "Content-Type: application/json" \
+        -H "x-api-key: ${ANTHROPIC_API_KEY}" \
+        -H "anthropic-version: 2023-06-01" \
+        -d "{
+            \"model\": \"${DEFAULT_MODEL}\",
+            \"max_tokens\": 8192,
+            \"system\": ${escaped_system},
+            \"messages\": [
+                {\"role\": \"user\", \"content\": ${escaped_user}}
+            ]
+        }" \
+        "https://api.anthropic.com/v1/messages" 2>&1)
+    
+    # Check for errors
+    if echo "$response" | jq -e '.error' &>/dev/null; then
+        local error_msg=$(echo "$response" | jq -r '.error.message // "Unknown API error"')
+        log_error "API error: $error_msg"
+        echo "API Error: $error_msg" >&2
+        return 1
+    fi
+    
+    # Extract the text content
+    echo "$response" | jq -r '.content[0].text // empty'
+}
+
+# ============================================================================
+# OLLAMA INTEGRATION
+# ============================================================================
+call_ollama() {
+    local system_prompt="$1"
+    local user_text="$2"
+    local model="${OLLAMA_MODEL:-llama3.2}"
+    local base_url="${OLLAMA_BASE_URL:-http://localhost:11434}"
+    
+    log_debug "Using Ollama with model: $model"
+    
+    # Escape the text for JSON
+    local escaped_system=$(echo "$system_prompt" | jq -Rs .)
+    local escaped_user=$(echo "$user_text" | jq -Rs .)
+    
+    local response=$(curl -s --max-time "$TIMEOUT" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"model\": \"${model}\",
+            \"system\": ${escaped_system},
+            \"prompt\": ${escaped_user},
+            \"stream\": false
+        }" \
+        "${base_url}/api/generate" 2>&1)
+    
+    # Check for errors
+    if [[ -z "$response" ]] || echo "$response" | jq -e '.error' &>/dev/null; then
+        local error_msg=$(echo "$response" | jq -r '.error // "Ollama connection failed"' 2>/dev/null || echo "Ollama connection failed")
+        log_error "Ollama error: $error_msg"
+        echo "Ollama Error: $error_msg" >&2
+        return 1
+    fi
+    
+    # Extract the response
+    echo "$response" | jq -r '.response // empty'
+}
+
+# ============================================================================
+# LM STUDIO INTEGRATION
+# ============================================================================
+call_lmstudio() {
+    local system_prompt="$1"
+    local user_text="$2"
+    local base_url="${LMSTUDIO_BASE_URL:-http://localhost:1234/v1}"
+    
+    log_debug "Using LM Studio"
+    
+    # Escape the text for JSON
+    local escaped_system=$(echo "$system_prompt" | jq -Rs .)
+    local escaped_user=$(echo "$user_text" | jq -Rs .)
+    
+    local response=$(curl -s --max-time "$TIMEOUT" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"messages\": [
+                {\"role\": \"system\", \"content\": ${escaped_system}},
+                {\"role\": \"user\", \"content\": ${escaped_user}}
+            ],
+            \"temperature\": 0.7,
+            \"max_tokens\": 8192
+        }" \
+        "${base_url}/chat/completions" 2>&1)
+    
+    # Check for errors
+    if [[ -z "$response" ]] || echo "$response" | jq -e '.error' &>/dev/null; then
+        local error_msg=$(echo "$response" | jq -r '.error.message // "LM Studio connection failed"' 2>/dev/null || echo "LM Studio connection failed")
+        log_error "LM Studio error: $error_msg"
+        echo "LM Studio Error: $error_msg" >&2
+        return 1
+    fi
+    
+    # Extract the response (OpenAI-compatible format)
+    echo "$response" | jq -r '.choices[0].message.content // empty'
+}
+
+# ============================================================================
+# UNIFIED AI CALL
+# ============================================================================
+call_ai() {
+    local system_prompt="$1"
+    local user_text="$2"
+    
+    # Determine which provider to use
+    local provider="${AI_PROVIDER:-auto}"
+    
+    if [[ "$provider" == "auto" ]]; then
+        # Auto-detect: check for local models first, then Claude
+        if [[ -n "${OLLAMA_MODEL:-}" ]] || curl -s --max-time 2 "http://localhost:11434/api/tags" &>/dev/null; then
+            provider="ollama"
+        elif curl -s --max-time 2 "http://localhost:1234/v1/models" &>/dev/null; then
+            provider="lmstudio"
+        else
+            provider="anthropic"
+        fi
+    fi
+    
+    case "$provider" in
+        ollama)
+            call_ollama "$system_prompt" "$user_text"
+            ;;
+        lmstudio)
+            call_lmstudio "$system_prompt" "$user_text"
+            ;;
+        anthropic|claude|*)
+            call_api "$system_prompt" "$user_text"
+            ;;
+    esac
+}
+
+# ============================================================================
+# HISTORY
+# ============================================================================
+save_to_history() {
+    local mode="$1"
+    local input="$2"
+    local output="$3"
+    
+    if [[ "$SAVE_HISTORY" != true ]]; then
+        return
+    fi
+    
+    mkdir -p "$HISTORY_DIR"
+    
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local history_file="${HISTORY_DIR}/${timestamp}_${mode}.json"
+    
+    # Create history entry with proper JSON escaping
+    local escaped_input=$(echo "$input" | jq -Rs .)
+    local escaped_output=$(echo "$output" | jq -Rs .)
+    
+    cat > "$history_file" << EOF
+{
+    "meta": {
+        "tool": "VibeIntelligence",
+        "brand": "VibeCaaS.com",
+        "version": "$VERSION"
+    },
+    "timestamp": "$(date -Iseconds 2>/dev/null || date '+%Y-%m-%dT%H:%M:%S')",
+    "mode": "$mode",
+    "input": $escaped_input,
+    "output": $escaped_output,
+    "input_length": ${#input},
+    "output_length": ${#output}
+}
+EOF
+    
+    log_info "Saved to history: $history_file"
+    
+    # Cleanup old history (keep max 100 by default)
+    local max_history=100
+    if [[ -f "$USER_CONFIG" ]] && command -v jq &>/dev/null; then
+        max_history=$(jq -r '.max_history // 100' "$USER_CONFIG" 2>/dev/null)
+    fi
+    
+    local history_count=$(ls -1 "$HISTORY_DIR"/*.json 2>/dev/null | wc -l)
+    if (( history_count > max_history )); then
+        ls -1t "$HISTORY_DIR"/*.json | tail -n +$((max_history + 1)) | xargs rm -f
+    fi
+}
+
+# ============================================================================
+# INPUT HANDLING
+# ============================================================================
+get_input() {
+    # Priority order: --text, --file, stdin, clipboard
+    
+    if [[ -n "$INPUT_TEXT" ]]; then
+        echo "$INPUT_TEXT"
+        return
+    fi
+    
+    if [[ -n "$INPUT_FILE" ]]; then
+        if [[ -f "$INPUT_FILE" ]]; then
+            cat "$INPUT_FILE"
+        else
+            echo "Error: File not found: $INPUT_FILE" >&2
+            exit 1
+        fi
+        return
+    fi
+    
+    # Check if stdin has data
+    if [[ ! -t 0 ]]; then
+        cat
+        return
+    fi
+    
+    # Fallback to clipboard
+    if command -v pbpaste &>/dev/null; then
+        pbpaste
+        return
+    fi
+    
+    echo "Error: No input provided" >&2
+    exit 1
+}
+
+# ============================================================================
+# OUTPUT HANDLING
+# ============================================================================
+output_result() {
+    local result="$1"
+    
+    case "$OUTPUT_MODE" in
+        clipboard)
+            if command -v pbcopy &>/dev/null; then
+                echo -n "$result" | pbcopy
+                [[ "$QUIET" != true ]] && echo "${AQUA_TEAL}✓ Copied to clipboard${RESET}" >&2
+            else
+                echo "$result"
+            fi
+            ;;
+        replace)
+            # For Automator services - output directly to stdout for replacement
+            echo -n "$result"
+            ;;
+        stdout)
+            echo "$result"
+            ;;
+        file:*)
+            local filepath="${OUTPUT_MODE#file:}"
+            echo "$result" > "$filepath"
+            [[ "$QUIET" != true ]] && echo "${AQUA_TEAL}✓ Saved to: $filepath${RESET}" >&2
+            ;;
+        *)
+            echo "$result"
+            ;;
+    esac
+}
+
+# ============================================================================
+# DIFF DISPLAY
+# ============================================================================
+show_diff() {
+    local original="$1"
+    local enhanced="$2"
+    
+    echo ""
+    echo "${VIBE_PURPLE}${BOLD}━━━ Original ━━━${RESET}"
+    echo "${DIM}$original${RESET}"
+    echo ""
+    echo "${AQUA_TEAL}${BOLD}━━━ Enhanced ━━━${RESET}"
+    echo "$enhanced"
+    echo ""
+}
+
+# ============================================================================
+# HELP
+# ============================================================================
+show_help() {
+    cat << EOF
+${VIBE_PURPLE}${BOLD}VibeIntelligence${RESET} v${VERSION}
+${DIM}AI-Powered Text Enhancement — Part of VibeCaaS.com${RESET}
+${AQUA_TEAL}"Code the Vibe. Deploy the Dream."${RESET}
+
+${BOLD}USAGE${RESET}
+    VibeIntelligence [OPTIONS]
+
+${BOLD}INPUT${RESET} (in priority order)
+    --text, -t STRING     Direct text input
+    --file, -f PATH       Read from file
+    <stdin>               Piped input
+    <clipboard>           Fallback to pbpaste
+
+${BOLD}MODES${RESET}
+    --mode, -m MODE       Processing mode (default: enhance)
+    
+    ${AQUA_TEAL}enhance${RESET}     Make text comprehensive and robust
+    ${AQUA_TEAL}agent${RESET}       Optimize for AI coding agents
+    ${AQUA_TEAL}spec${RESET}        Expand to technical specification
+    ${AQUA_TEAL}simplify${RESET}    Make clearer and more concise
+    ${AQUA_TEAL}proofread${RESET}   Fix grammar and spelling only
+    ${AQUA_TEAL}custom${RESET}      Use custom template (requires -T)
+
+${BOLD}OUTPUT${RESET}
+    --output, -o MODE     Output mode (default: clipboard)
+    
+    ${AQUA_TEAL}clipboard${RESET}   Copy to clipboard
+    ${AQUA_TEAL}replace${RESET}     Output to stdout (for Services)
+    ${AQUA_TEAL}stdout${RESET}      Print to terminal
+    ${AQUA_TEAL}file:PATH${RESET}   Save to file
+
+${BOLD}AI PROVIDER${RESET}
+    --provider, -p NAME   AI provider (default: auto)
+    
+    ${AQUA_TEAL}auto${RESET}        Auto-detect (Ollama → LM Studio → Anthropic)
+    ${AQUA_TEAL}anthropic${RESET}   Use Anthropic Claude API
+    ${AQUA_TEAL}ollama${RESET}      Use local Ollama
+    ${AQUA_TEAL}lmstudio${RESET}    Use local LM Studio
+
+${BOLD}OPTIONS${RESET}
+    --template, -T PATH   Custom template file for 'custom' mode
+    --notify, -n          Show macOS notification on completion
+    --quiet, -q           Suppress status messages
+    --diff, -d            Show before/after comparison
+    --no-history          Don't save to history
+    --no-brand            Don't include VibeCaaS brand context
+    --version, -v         Show version
+    --help, -h            Show this help
+
+${BOLD}ENVIRONMENT VARIABLES${RESET}
+    ANTHROPIC_API_KEY     API key for Anthropic Claude
+    AI_PROVIDER           Default provider (auto|anthropic|ollama|lmstudio)
+    OLLAMA_MODEL          Ollama model name (default: llama3.2)
+    OLLAMA_BASE_URL       Ollama API URL (default: http://localhost:11434)
+    LMSTUDIO_BASE_URL     LM Studio API URL (default: http://localhost:1234/v1)
+
+${BOLD}EXAMPLES${RESET}
+    # Enhance text from clipboard
+    ${DIM}VibeIntelligence --mode enhance --notify${RESET}
+
+    # Optimize for AI agents with diff
+    ${DIM}echo "create login form" | VibeIntelligence -m agent -d${RESET}
+
+    # Generate spec from file, save to file
+    ${DIM}VibeIntelligence -m spec -f idea.txt -o file:spec.md${RESET}
+
+    # Use local Ollama
+    ${DIM}VibeIntelligence -m enhance -p ollama${RESET}
+
+    # Use custom template
+    ${DIM}VibeIntelligence -m custom -T api-endpoint.md${RESET}
+
+${BOLD}CONFIG FILES${RESET}
+    ${CONFIG_DIR}/config.json     User preferences
+    ${CONFIG_DIR}/brand.json      Brand configuration
+    ${CONFIG_DIR}/templates/      Custom prompt templates
+
+${VIBE_PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}
+${DIM}© 2025 NeuralQuantum.ai LLC — vibecaas.com${RESET}
+EOF
+}
+
+show_version() {
+    echo "VibeIntelligence v${VERSION}"
+    echo "VibeCaaS.com - Code the Vibe. Deploy the Dream."
+    echo "© 2025 NeuralQuantum.ai LLC"
+}
+
+# ============================================================================
+# ARGUMENT PARSING
+# ============================================================================
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --text|-t)
+                INPUT_TEXT="$2"
+                shift 2
+                ;;
+            --file|-f)
+                INPUT_FILE="$2"
+                shift 2
+                ;;
+            --mode|-m)
+                MODE="$2"
+                shift 2
+                ;;
+            --output|-o)
+                OUTPUT_MODE="$2"
+                shift 2
+                ;;
+            --provider|-p)
+                export AI_PROVIDER="$2"
+                shift 2
+                ;;
+            --template|-T)
+                CUSTOM_TEMPLATE="$2"
+                shift 2
+                ;;
+            --notify|-n)
+                NOTIFY=true
+                shift
+                ;;
+            --quiet|-q)
+                QUIET=true
+                shift
+                ;;
+            --diff|-d)
+                SHOW_DIFF=true
+                shift
+                ;;
+            --no-history)
+                SAVE_HISTORY=false
+                shift
+                ;;
+            --no-brand)
+                BRAND_CONTEXT=false
+                shift
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            --version|-v)
+                show_version
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                echo "Use --help for usage information" >&2
+                exit 1
+                ;;
+        esac
+    done
+}
+
+# ============================================================================
+# MAIN
+# ============================================================================
+main() {
+    # Initialize
+    mkdir -p "$(dirname "$LOG_FILE")"
+    touch "$LOG_FILE"
+    
+    log_info "Starting VibeIntelligence v${VERSION}"
+    
+    # Load configuration
+    load_config
+    
+    # Parse arguments
+    parse_args "$@"
+    
+    log_info "Mode: $MODE, Output: $OUTPUT_MODE"
+    
+    # Get input text
+    local input_text=$(get_input)
+    
+    if [[ -z "$input_text" ]]; then
+        echo "Error: No input text provided" >&2
+        log_error "No input text provided"
+        exit 1
+    fi
+    
+    log_debug "Input length: ${#input_text}"
+    
+    # Get system prompt
+    local system_prompt=$(get_system_prompt "$MODE")
+    
+    # Show processing notification
+    notify_processing
+    
+    # Call AI
+    [[ "$QUIET" != true ]] && echo "${VIBE_PURPLE}🎧 ${NOTIFY_PROCESSING}${RESET}" >&2
+    
+    local result
+    if ! result=$(call_ai "$system_prompt" "$input_text"); then
+        log_error "AI call failed"
+        notify_error
+        exit 1
+    fi
+    
+    if [[ -z "$result" ]]; then
+        log_error "Empty response from AI"
+        echo "Error: Received empty response from AI" >&2
+        notify_error
+        exit 1
+    fi
+    
+    log_info "Successfully processed text (output length: ${#result})"
+    
+    # Show diff if requested
+    if [[ "$SHOW_DIFF" == true && "$OUTPUT_MODE" != "replace" ]]; then
+        show_diff "$input_text" "$result"
+    fi
+    
+    # Save to history
+    save_to_history "$MODE" "$input_text" "$result"
+    
+    # Output result
+    output_result "$result"
+    
+    # Success notification
+    notify_success "$MODE"
+    
+    log_info "Completed successfully"
+}
+
+# Run main
+main "$@"

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>AMApplicationBuild</key>
+    <string>523</string>
+    <key>AMApplicationVersion</key>
+    <string>2.10</string>
+    <key>AMDocumentVersion</key>
+    <string>2</string>
+    <key>actions</key>
+    <array>
+        <dict>
+            <key>action</key>
+            <dict>
+                <key>AMAccepts</key>
+                <dict>
+                    <key>Container</key>
+                    <string>List</string>
+                    <key>Optional</key>
+                    <true/>
+                    <key>Types</key>
+                    <array>
+                        <string>com.apple.cocoa.string</string>
+                    </array>
+                </dict>
+                <key>AMActionVersion</key>
+                <string>2.0.3</string>
+                <key>AMApplication</key>
+                <array>
+                    <string>Automator</string>
+                </array>
+                <key>AMBundleIdentifier</key>
+                <string>com.apple.RunShellScript</string>
+                <key>AMCategory</key>
+                <array>
+                    <string>AMCategoryUtilities</string>
+                </array>
+                <key>AMIconName</key>
+                <string>Run Shell Script</string>
+                <key>AMName</key>
+                <string>Run Shell Script</string>
+                <key>AMProvides</key>
+                <dict>
+                    <key>Container</key>
+                    <string>List</string>
+                    <key>Types</key>
+                    <array>
+                        <string>com.apple.cocoa.string</string>
+                    </array>
+                </dict>
+            </dict>
+            <key>class</key>
+            <string>RunShellScriptAction</string>
+            <key>parameters</key>
+            <dict>
+                <key>COMMAND_STRING</key>
+                <string>export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/bin:$PATH"
+"$HOME/Projects/VibeIntelligence/bin/VibeIntelligence" --mode simplify --output replace --notify 2>>"$HOME/Projects/VibeIntelligence/logs/VibeIntelligence.log"</string>
+                <key>CheckedForUserDefaultShell</key>
+                <true/>
+                <key>inputMethod</key>
+                <integer>0</integer>
+                <key>shell</key>
+                <string>/bin/zsh</string>
+                <key>source</key>
+                <string></string>
+            </dict>
+        </dict>
+    </array>
+    <key>connectors</key>
+    <dict/>
+    <key>workflowMetaData</key>
+    <dict>
+        <key>workflowTypeIdentifier</key>
+        <string>com.apple.Automator.servicesMenu</string>
+    </dict>
+</dict>
+</plist>

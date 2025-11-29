@@ -1,0 +1,35 @@
+{
+    "model": "claude-sonnet-4-20250514",
+    "default_mode": "enhance",
+    "notify": true,
+    "history_enabled": true,
+    "max_history": 100,
+    "brand_context": true,
+    "custom_templates_dir": "~/.config/VibeIntelligence/templates",
+    "providers": {
+        "default": "auto",
+        "anthropic": {
+            "model": "claude-sonnet-4-20250514",
+            "max_tokens": 8192
+        },
+        "ollama": {
+            "model": "llama3.2",
+            "base_url": "http://localhost:11434"
+        },
+        "lmstudio": {
+            "base_url": "http://localhost:1234/v1"
+        }
+    },
+    "keyboard_shortcuts": {
+        "enhance": "⌃⌥E",
+        "agent": "⌃⌥A",
+        "spec": "⌃⌥S",
+        "simplify": "⌃⌥D",
+        "custom": "⌃⌥C"
+    },
+    "ui": {
+        "theme": "auto",
+        "show_diff": false,
+        "confirm_replace": false
+    }
+}

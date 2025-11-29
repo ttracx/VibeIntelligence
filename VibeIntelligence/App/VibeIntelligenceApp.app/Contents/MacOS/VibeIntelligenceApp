@@ -1,0 +1,171 @@
+#!/bin/bash
+# VibeIntelligence Menu Bar App Launcher
+# This script launches the settings UI using osascript
+# For a native app experience, compile the Swift source in /App/Source/
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+PROJECT_DIR="$HOME/Projects/VibeIntelligence"
+CONFIG_DIR="$HOME/.config/VibeIntelligence"
+
+# Launch the settings window
+osascript << 'APPLESCRIPT'
+use AppleScript version "2.4"
+use scripting additions
+use framework "Foundation"
+use framework "AppKit"
+
+-- VibeCaaS Brand Colors
+property vibePurple : {109/255, 74/255, 255/255}
+property aquaTeal : {20/255, 184/255, 166/255}
+property signalAmber : {255/255, 140/255, 0/255}
+
+on run
+    tell application "System Events"
+        set frontApp to name of first application process whose frontmost is true
+    end tell
+    
+    set configPath to (POSIX path of (path to home folder)) & ".config/VibeIntelligence/config.json"
+    set projectPath to (POSIX path of (path to home folder)) & "Projects/VibeIntelligence"
+    
+    set menuChoice to choose from list {¬
+        "🎧 VibeIntelligence Settings", ¬
+        "─────────────────────", ¬
+        "📝 Open Config File", ¬
+        "📁 Open Templates Folder", ¬
+        "📋 View History", ¬
+        "📊 View Logs", ¬
+        "─────────────────────", ¬
+        "🔧 AI Provider Settings", ¬
+        "🎨 Brand Configuration", ¬
+        "─────────────────────", ¬
+        "📖 Documentation", ¬
+        "🌐 VibeCaaS.com", ¬
+        "─────────────────────", ¬
+        "❌ Quit"¬
+    } with title "VibeIntelligence" with prompt "Code the Vibe. Deploy the Dream." default items {"🎧 VibeIntelligence Settings"} OK button name "Select" cancel button name "Close"
+    
+    if menuChoice is false then
+        return
+    end if
+    
+    set selectedItem to item 1 of menuChoice
+    
+    if selectedItem starts with "─" then
+        -- Separator, do nothing
+        return
+    else if selectedItem is "📝 Open Config File" then
+        do shell script "open -a TextEdit \"" & configPath & "\""
+    else if selectedItem is "📁 Open Templates Folder" then
+        do shell script "open \"" & (POSIX path of (path to home folder)) & ".config/VibeIntelligence/templates\""
+    else if selectedItem is "📋 View History" then
+        do shell script "open \"" & (POSIX path of (path to home folder)) & ".config/VibeIntelligence/history\""
+    else if selectedItem is "📊 View Logs" then
+        do shell script "open -a Console \"" & projectPath & "/logs/VibeIntelligence.log\""
+    else if selectedItem is "🔧 AI Provider Settings" then
+        showProviderSettings()
+    else if selectedItem is "🎨 Brand Configuration" then
+        do shell script "open -a TextEdit \"" & (POSIX path of (path to home folder)) & ".config/VibeIntelligence/brand.json\""
+    else if selectedItem is "📖 Documentation" then
+        do shell script "open \"" & projectPath & "/README.md\""
+    else if selectedItem is "🌐 VibeCaaS.com" then
+        do shell script "open 'https://vibecaas.com'"
+    else if selectedItem is "❌ Quit" then
+        return
+    else if selectedItem is "🎧 VibeIntelligence Settings" then
+        showMainSettings()
+    end if
+end run
+
+on showMainSettings()
+    set configPath to (POSIX path of (path to home folder)) & ".config/VibeIntelligence/config.json"
+    
+    try
+        set configContent to do shell script "cat \"" & configPath & "\""
+        set currentModel to do shell script "echo '" & configContent & "' | /usr/bin/python3 -c \"import sys,json; print(json.load(sys.stdin).get('model', 'claude-sonnet-4-20250514'))\""
+        set currentMode to do shell script "echo '" & configContent & "' | /usr/bin/python3 -c \"import sys,json; print(json.load(sys.stdin).get('default_mode', 'enhance'))\""
+        set notifyEnabled to do shell script "echo '" & configContent & "' | /usr/bin/python3 -c \"import sys,json; print(json.load(sys.stdin).get('notify', True))\""
+    on error
+        set currentModel to "claude-sonnet-4-20250514"
+        set currentMode to "enhance"
+        set notifyEnabled to "True"
+    end try
+    
+    display dialog "VibeIntelligence Settings
+
+Current Configuration:
+• Model: " & currentModel & "
+• Default Mode: " & currentMode & "
+• Notifications: " & notifyEnabled & "
+
+To modify settings, edit the config file directly." with title "VibeIntelligence - Settings" buttons {"Edit Config", "Close"} default button "Close" with icon note
+    
+    if button returned of result is "Edit Config" then
+        do shell script "open -a TextEdit \"" & configPath & "\""
+    end if
+end showMainSettings
+
+on showProviderSettings()
+    set providerChoice to choose from list {¬
+        "☁️ Anthropic Claude (Cloud)", ¬
+        "🦙 Ollama (Local)", ¬
+        "🖥️ LM Studio (Local)", ¬
+        "🔄 Auto-detect (Default)"¬
+    } with title "AI Provider" with prompt "Select your preferred AI provider:" default items {"🔄 Auto-detect (Default)"} OK button name "Select" cancel button name "Cancel"
+    
+    if providerChoice is false then
+        return
+    end if
+    
+    set selectedProvider to item 1 of providerChoice
+    
+    if selectedProvider starts with "☁️" then
+        display dialog "Anthropic Claude Setup
+
+1. Get your API key from:
+   https://console.anthropic.com/
+
+2. Set the environment variable:
+   export ANTHROPIC_API_KEY='your-key'
+
+3. Or add to config.json:
+   \"api_key\": \"your-key\"" with title "Anthropic Setup" buttons {"Open Console", "OK"} default button "OK"
+        if button returned of result is "Open Console" then
+            do shell script "open 'https://console.anthropic.com/'"
+        end if
+    else if selectedProvider starts with "🦙" then
+        display dialog "Ollama Setup
+
+1. Install Ollama:
+   brew install ollama
+
+2. Pull a model:
+   ollama pull llama3.2
+
+3. Start Ollama (runs automatically)
+
+4. Set environment variable:
+   export AI_PROVIDER=ollama
+   export OLLAMA_MODEL=llama3.2" with title "Ollama Setup" buttons {"Install Ollama", "OK"} default button "OK"
+        if button returned of result is "Install Ollama" then
+            do shell script "open 'https://ollama.ai'"
+        end if
+    else if selectedProvider starts with "🖥️" then
+        display dialog "LM Studio Setup
+
+1. Download LM Studio:
+   https://lmstudio.ai
+
+2. Load a model in LM Studio
+
+3. Start the local server
+   (Settings → Local Server → Start)
+
+4. Set environment variable:
+   export AI_PROVIDER=lmstudio" with title "LM Studio Setup" buttons {"Download", "OK"} default button "OK"
+        if button returned of result is "Download" then
+            do shell script "open 'https://lmstudio.ai'"
+        end if
+    end if
+end showProviderSettings
+APPLESCRIPT
