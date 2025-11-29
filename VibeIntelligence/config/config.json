@@ -1,0 +1,25 @@
+{
+    "model": "claude-sonnet-4-20250514",
+    "default_mode": "enhance",
+    "notify": true,
+    "history_enabled": true,
+    "max_history": 100,
+    "brand_context": true,
+    "custom_templates_dir": "~/.config/VibeIntelligence/templates",
+    "providers": {
+        "claude": {
+            "enabled": true,
+            "model": "claude-sonnet-4-20250514"
+        },
+        "ollama": {
+            "enabled": true,
+            "host": "http://localhost:11434",
+            "model": "llama3.2"
+        },
+        "lmstudio": {
+            "enabled": true,
+            "host": "http://localhost:1234",
+            "model": "local-model"
+        }
+    }
+}
