@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6D4AFF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#5438CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14B8A6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#14B8A6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Rounded square background -->
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="url(#bgGradient)"/>
+  
+  <!-- Inner shadow/glow -->
+  <rect x="32" y="32" width="448" height="448" rx="80" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  
+  <!-- Sound wave bars (equalizer style) -->
+  <g transform="translate(256, 256)" filter="url(#glow)">
+    <!-- Left bars -->
+    <rect x="-160" y="-60" width="24" height="120" rx="12" fill="white" opacity="0.9"/>
+    <rect x="-120" y="-90" width="24" height="180" rx="12" fill="white" opacity="0.95"/>
+    <rect x="-80" y="-40" width="24" height="80" rx="12" fill="white" opacity="0.85"/>
+    
+    <!-- Center bars -->
+    <rect x="-40" y="-100" width="24" height="200" rx="12" fill="url(#waveGradient)"/>
+    <rect x="0" y="-120" width="24" height="240" rx="12" fill="url(#waveGradient)"/>
+    <rect x="40" y="-80" width="24" height="160" rx="12" fill="url(#waveGradient)"/>
+    
+    <!-- Right bars -->
+    <rect x="80" y="-50" width="24" height="100" rx="12" fill="white" opacity="0.85"/>
+    <rect x="120" y="-70" width="24" height="140" rx="12" fill="white" opacity="0.95"/>
+    <rect x="160" y="-45" width="24" height="90" rx="12" fill="white" opacity="0.9"/>
+  </g>
+  
+  <!-- AI sparkle accents -->
+  <g fill="#FF8C00" opacity="0.9">
+    <circle cx="120" cy="120" r="8"/>
+    <circle cx="392" cy="120" r="6"/>
+    <circle cx="100" cy="392" r="5"/>
+    <circle cx="412" cy="380" r="7"/>
+  </g>
+  
+  <!-- Small "VI" text hint at bottom -->
+  <text x="256" y="460" font-family="Inter, -apple-system, sans-serif" font-size="36" font-weight="700" fill="rgba(255,255,255,0.6)" text-anchor="middle">VI</text>
+</svg>
