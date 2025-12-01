@@ -24,6 +24,12 @@
 	<string>public.app-category.developer-tools</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>This app accesses your desktop folder to review and allow saving files.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>This app accesses your document folder to review and allow saving files.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>This app accesses your download folder to review and allow saving files.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2025 NeuralQuantum.ai LLC. All rights reserved.</string>
 	<key>NSMainStoryboardFile</key>
@@ -34,6 +40,8 @@
 	<true/>
 	<key>NSSupportsSuddenTermination</key>
 	<true/>
+	<key>NSSystemAdministrationUsageDescription</key>
+	<string>This app needs system adminstrative access to allow rewrite and AI tools across your system. </string>
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>
 </dict>
