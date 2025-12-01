@@ -109,6 +109,8 @@ class ConfigManager: ObservableObject {
                     isProviderAvailable = KeychainManager.shared.hasAPIKey(for: .openai)
                 case .gemini:
                     isProviderAvailable = KeychainManager.shared.hasAPIKey(for: .gemini)
+                case .vibecaas:
+                    isProviderAvailable = ollamaAvailable && OllamaManager.shared.isModelInstalled
                 case .ollama:
                     isProviderAvailable = ollamaAvailable
                 case .lmstudio:

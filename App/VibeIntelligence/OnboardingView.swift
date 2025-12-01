@@ -429,6 +429,7 @@ struct ProviderOption: View {
         case .anthropic: return "Cloud-based, requires API key"
         case .openai: return "OpenAI GPT-4o, requires API key"
         case .gemini: return "Google Gemini, requires API key"
+        case .vibecaas: return "Local vision AI by VibeCaaS.com"
         case .ollama: return "Local, runs on your machine"
         case .lmstudio: return "Local, GUI-based model runner"
         }

@@ -351,6 +351,9 @@ struct AIProviderSettingsTab: View {
                 }
             }
             
+            // VibeCaaS Vision Model Section
+            OllamaSettingsSection()
+            
             Section("Test Connection") {
                 HStack {
                     Button("Test Provider") {

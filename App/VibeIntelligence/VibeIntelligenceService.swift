@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import AppKit
 
 // MARK: - AI Provider
 enum AIProvider: String, CaseIterable {
@@ -14,6 +15,7 @@ enum AIProvider: String, CaseIterable {
     case anthropic
     case openai
     case gemini
+    case vibecaas  // VibeCaaS-vl:2b local vision model
     case ollama
     case lmstudio
     
@@ -23,6 +25,7 @@ enum AIProvider: String, CaseIterable {
         case .anthropic: return "Anthropic Claude"
         case .openai: return "OpenAI GPT"
         case .gemini: return "Google Gemini"
+        case .vibecaas: return "VibeCaaS-vl:2b (Vision)"
         case .ollama: return "Ollama (Local)"
         case .lmstudio: return "LM Studio (Local)"
         }
@@ -34,8 +37,16 @@ enum AIProvider: String, CaseIterable {
         case .anthropic: return "cloud"
         case .openai: return "brain"
         case .gemini: return "sparkles"
+        case .vibecaas: return "eye.circle"
         case .ollama: return "desktopcomputer"
         case .lmstudio: return "server.rack"
+        }
+    }
+    
+    var isLocal: Bool {
+        switch self {
+        case .vibecaas, .ollama, .lmstudio: return true
+        default: return false
         }
     }
 }
@@ -91,6 +102,8 @@ class VibeIntelligenceService {
             return try await callOpenAI(systemPrompt: systemPrompt, userText: text)
         case .gemini:
             return try await callGemini(systemPrompt: systemPrompt, userText: text)
+        case .vibecaas:
+            return try await callVibeCaaS(systemPrompt: systemPrompt, userText: text)
         case .ollama:
             return try await callOllama(systemPrompt: systemPrompt, userText: text)
         case .lmstudio:
@@ -98,6 +111,12 @@ class VibeIntelligenceService {
         case .auto:
             throw VibeIntelligenceError.invalidProvider
         }
+    }
+    
+    /// Process text with an image using VibeCaaS-vl vision model
+    func processWithImage(text: String, image: NSImage, mode: ProcessingMode) async throws -> String {
+        let systemPrompt = getSystemPrompt(for: mode)
+        return try await OllamaManager.shared.analyzeImage(image, prompt: "\(systemPrompt)\n\nUser request: \(text)")
     }
     
     // MARK: - Provider Detection
@@ -109,8 +128,14 @@ class VibeIntelligenceService {
             return preferred
         }
         
-        // Auto-detect: try local first, then cloud with available keys
-        if await isOllamaAvailable() {
+        // Auto-detect: try local first (VibeCaaS-vl has priority for vision tasks)
+        let ollamaAvailable = await isOllamaAvailable()
+        
+        if OllamaManager.shared.isModelInstalled && ollamaAvailable {
+            return .vibecaas
+        }
+        
+        if ollamaAvailable {
             return .ollama
         }
         
@@ -330,6 +355,45 @@ class VibeIntelligenceService {
               let parts = content["parts"] as? [[String: Any]],
               let firstPart = parts.first,
               let text = firstPart["text"] as? String else {
+            throw VibeIntelligenceError.emptyResponse
+        }
+        
+        return text
+    }
+    
+    // MARK: - VibeCaaS-vl API (Local Vision Model)
+    
+    private func callVibeCaaS(systemPrompt: String, userText: String) async throws -> String {
+        guard OllamaManager.shared.isOllamaRunning else {
+            // Fall back to regular Ollama if VibeCaaS not running
+            return try await callOllama(systemPrompt: systemPrompt, userText: userText)
+        }
+        
+        var request = URLRequest(url: ollamaURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 120
+        
+        // Use VibeCaaS-vl model if installed, otherwise fall back to base
+        let modelName = OllamaManager.shared.isModelInstalled ? "VibeCaaS-vl:2b" : "qwen2.5vl:3b"
+        
+        let body: [String: Any] = [
+            "model": modelName,
+            "system": systemPrompt,
+            "prompt": userText,
+            "stream": false
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw VibeIntelligenceError.networkError("VibeCaaS-vl request failed")
+        }
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let text = json["response"] as? String else {
             throw VibeIntelligenceError.emptyResponse
         }
         

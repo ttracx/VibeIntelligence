@@ -177,6 +177,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 WindowManager.shared.showMainWindow()
             }
         }
+        
+        // Check and setup VibeCaaS-vl model if auto-setup is enabled
+        if UserDefaults.standard.bool(forKey: "autoSetupVibeCaaSVL") {
+            Task {
+                await OllamaManager.shared.setupVibeCaaSVision()
+            }
+        } else {
+            // Just check status
+            OllamaManager.shared.checkStatus()
+        }
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
