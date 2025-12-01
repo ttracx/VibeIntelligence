@@ -55,9 +55,8 @@ brew install ollama
 # Start Ollama server
 ollama serve
 
-# Create the model
-cd Models/VibeCaaS-vl-2b
-ollama create VibeCaaS-vl:2b -f Modelfile
+# Pull the model directly from Ollama Hub
+ollama run NeuroEquality/VibeCaaS-vl:2b
 ```
 
 ## Usage
@@ -66,17 +65,17 @@ ollama create VibeCaaS-vl:2b -f Modelfile
 
 ```bash
 # Analyze an image
-ollama run VibeCaaS-vl:2b "Describe this image" --image ./photo.jpg
+ollama run NeuroEquality/VibeCaaS-vl:2b "Describe this image" --image ./photo.jpg
 
 # Extract text
-ollama run VibeCaaS-vl:2b "Extract all text from this image" --image ./document.png
+ollama run NeuroEquality/VibeCaaS-vl:2b "Extract all text from this image" --image ./document.png
 ```
 
 ### API
 
 ```bash
 curl http://localhost:11434/api/generate -d '{
-  "model": "VibeCaaS-vl:2b",
+  "model": "NeuroEquality/VibeCaaS-vl:2b",
   "prompt": "Describe this image",
   "images": ["<base64_encoded_image>"]
 }'
