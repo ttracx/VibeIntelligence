@@ -84,8 +84,12 @@ struct VibeIntelligenceApp: App {
 class WindowManager: ObservableObject {
     static let shared = WindowManager()
     
+    /// Flag to prevent didSet side effects during initialization
+    private var isInitialized = false
+    
     @Published var showDockIcon: Bool {
         didSet {
+            guard isInitialized else { return }
             UserDefaults.standard.set(showDockIcon, forKey: "showDockIcon")
             updateDockVisibility()
         }
@@ -93,6 +97,7 @@ class WindowManager: ObservableObject {
     
     @Published var showMenuBarIcon: Bool {
         didSet {
+            guard isInitialized else { return }
             UserDefaults.standard.set(showMenuBarIcon, forKey: "showMenuBarIcon")
         }
     }
@@ -100,21 +105,24 @@ class WindowManager: ObservableObject {
     @Published var isMainWindowVisible = false
     
     private init() {
-        // Check if keys exist before reading to avoid triggering didSet observers during init
-        let dockIconExists = UserDefaults.standard.object(forKey: "showDockIcon") != nil
-        let menuBarIconExists = UserDefaults.standard.object(forKey: "showMenuBarIcon") != nil
+        // Read from UserDefaults with defaults for first launch
+        let dockIconValue = UserDefaults.standard.object(forKey: "showDockIcon") as? Bool ?? true
+        let menuBarIconValue = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true
         
-        // Set values only once - default to true on first launch
-        self.showDockIcon = dockIconExists ? UserDefaults.standard.bool(forKey: "showDockIcon") : true
-        self.showMenuBarIcon = menuBarIconExists ? UserDefaults.standard.bool(forKey: "showMenuBarIcon") : true
+        // Assign values (didSet will fire but guard prevents side effects)
+        self.showDockIcon = dockIconValue
+        self.showMenuBarIcon = menuBarIconValue
         
-        // Persist defaults on first launch (without triggering didSet since we're still in init)
-        if !dockIconExists {
+        // Persist defaults on first launch
+        if UserDefaults.standard.object(forKey: "showDockIcon") == nil {
             UserDefaults.standard.set(true, forKey: "showDockIcon")
         }
-        if !menuBarIconExists {
+        if UserDefaults.standard.object(forKey: "showMenuBarIcon") == nil {
             UserDefaults.standard.set(true, forKey: "showMenuBarIcon")
         }
+        
+        // Mark initialization complete - future didSet calls will execute side effects
+        isInitialized = true
     }
     
     func updateDockVisibility() {
