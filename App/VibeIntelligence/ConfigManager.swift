@@ -98,9 +98,17 @@ class ConfigManager: ObservableObject {
                 
                 switch currentProvider {
                 case .auto:
-                    isProviderAvailable = ollamaAvailable || lmstudioAvailable || loadAPIKey() != nil
+                    let hasCloudKey = KeychainManager.shared.hasAPIKey(for: .anthropic) ||
+                                      KeychainManager.shared.hasAPIKey(for: .openai) ||
+                                      KeychainManager.shared.hasAPIKey(for: .gemini) ||
+                                      loadAPIKey() != nil
+                    isProviderAvailable = ollamaAvailable || lmstudioAvailable || hasCloudKey
                 case .anthropic:
-                    isProviderAvailable = loadAPIKey() != nil
+                    isProviderAvailable = KeychainManager.shared.hasAPIKey(for: .anthropic) || loadAPIKey() != nil
+                case .openai:
+                    isProviderAvailable = KeychainManager.shared.hasAPIKey(for: .openai)
+                case .gemini:
+                    isProviderAvailable = KeychainManager.shared.hasAPIKey(for: .gemini)
                 case .ollama:
                     isProviderAvailable = ollamaAvailable
                 case .lmstudio:

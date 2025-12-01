@@ -27,6 +27,11 @@ struct SettingsView: View {
                     Label("Appearance", systemImage: "paintbrush")
                 }
             
+            APIKeysView()
+                .tabItem {
+                    Label("API Keys", systemImage: "key.fill")
+                }
+            
             AIProviderSettingsTab()
                 .tabItem {
                     Label("AI Provider", systemImage: "cpu")

@@ -12,6 +12,8 @@ import Foundation
 enum AIProvider: String, CaseIterable {
     case auto
     case anthropic
+    case openai
+    case gemini
     case ollama
     case lmstudio
     
@@ -19,6 +21,8 @@ enum AIProvider: String, CaseIterable {
         switch self {
         case .auto: return "Auto-detect"
         case .anthropic: return "Anthropic Claude"
+        case .openai: return "OpenAI GPT"
+        case .gemini: return "Google Gemini"
         case .ollama: return "Ollama (Local)"
         case .lmstudio: return "LM Studio (Local)"
         }
@@ -28,6 +32,8 @@ enum AIProvider: String, CaseIterable {
         switch self {
         case .auto: return "sparkle.magnifyingglass"
         case .anthropic: return "cloud"
+        case .openai: return "brain"
+        case .gemini: return "sparkles"
         case .ollama: return "desktopcomputer"
         case .lmstudio: return "server.rack"
         }
@@ -63,7 +69,10 @@ class VibeIntelligenceService {
     static let shared = VibeIntelligenceService()
     
     private let configManager = ConfigManager.shared
+    private let keychainManager = KeychainManager.shared
     private let anthropicURL = URL(string: "https://api.anthropic.com/v1/messages")!
+    private let openaiURL = URL(string: "https://api.openai.com/v1/chat/completions")!
+    private let geminiURL = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent")!
     private let ollamaURL = URL(string: "http://localhost:11434/api/generate")!
     private let lmstudioURL = URL(string: "http://localhost:1234/v1/chat/completions")!
     
@@ -78,6 +87,10 @@ class VibeIntelligenceService {
         switch provider {
         case .anthropic:
             return try await callAnthropic(systemPrompt: systemPrompt, userText: text)
+        case .openai:
+            return try await callOpenAI(systemPrompt: systemPrompt, userText: text)
+        case .gemini:
+            return try await callGemini(systemPrompt: systemPrompt, userText: text)
         case .ollama:
             return try await callOllama(systemPrompt: systemPrompt, userText: text)
         case .lmstudio:
@@ -96,7 +109,7 @@ class VibeIntelligenceService {
             return preferred
         }
         
-        // Auto-detect: try local first, then cloud
+        // Auto-detect: try local first, then cloud with available keys
         if await isOllamaAvailable() {
             return .ollama
         }
@@ -105,6 +118,20 @@ class VibeIntelligenceService {
             return .lmstudio
         }
         
+        // Check which cloud providers have keys configured
+        if keychainManager.hasAPIKey(for: .anthropic) {
+            return .anthropic
+        }
+        
+        if keychainManager.hasAPIKey(for: .openai) {
+            return .openai
+        }
+        
+        if keychainManager.hasAPIKey(for: .gemini) {
+            return .gemini
+        }
+        
+        // Default to anthropic (will show error if no key)
         return .anthropic
     }
     
@@ -137,15 +164,20 @@ class VibeIntelligenceService {
     // MARK: - Anthropic API
     
     private func callAnthropic(systemPrompt: String, userText: String) async throws -> String {
-        guard let apiKey = configManager.loadAPIKey(), !apiKey.isEmpty else {
-            // Try environment variable
-            guard let envKey = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"], !envKey.isEmpty else {
-                throw VibeIntelligenceError.noAPIKey
-            }
+        // Try Keychain first, then ConfigManager, then environment
+        if let apiKey = keychainManager.getAPIKey(for: .anthropic), !apiKey.isEmpty {
+            return try await callAnthropicWithKey(apiKey: apiKey, systemPrompt: systemPrompt, userText: userText)
+        }
+        
+        if let apiKey = configManager.loadAPIKey(), !apiKey.isEmpty {
+            return try await callAnthropicWithKey(apiKey: apiKey, systemPrompt: systemPrompt, userText: userText)
+        }
+        
+        if let envKey = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"], !envKey.isEmpty {
             return try await callAnthropicWithKey(apiKey: envKey, systemPrompt: systemPrompt, userText: userText)
         }
         
-        return try await callAnthropicWithKey(apiKey: apiKey, systemPrompt: systemPrompt, userText: userText)
+        throw VibeIntelligenceError.noAPIKey
     }
     
     private func callAnthropicWithKey(apiKey: String, systemPrompt: String, userText: String) async throws -> String {
@@ -186,6 +218,118 @@ class VibeIntelligenceService {
               let content = json["content"] as? [[String: Any]],
               let firstContent = content.first,
               let text = firstContent["text"] as? String else {
+            throw VibeIntelligenceError.emptyResponse
+        }
+        
+        return text
+    }
+    
+    // MARK: - OpenAI API
+    
+    private func callOpenAI(systemPrompt: String, userText: String) async throws -> String {
+        guard let apiKey = keychainManager.getAPIKey(for: .openai) ?? ProcessInfo.processInfo.environment["OPENAI_API_KEY"],
+              !apiKey.isEmpty else {
+            throw VibeIntelligenceError.noAPIKey
+        }
+        
+        var request = URLRequest(url: openaiURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 60
+        
+        let body: [String: Any] = [
+            "model": "gpt-4o",
+            "max_tokens": 8192,
+            "messages": [
+                ["role": "system", "content": systemPrompt],
+                ["role": "user", "content": userText]
+            ]
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw VibeIntelligenceError.networkError("Invalid response")
+        }
+        
+        if httpResponse.statusCode != 200 {
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let error = errorJson["error"] as? [String: Any],
+               let message = error["message"] as? String {
+                throw VibeIntelligenceError.apiError(message)
+            }
+            throw VibeIntelligenceError.apiError("HTTP \(httpResponse.statusCode)")
+        }
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let choices = json["choices"] as? [[String: Any]],
+              let firstChoice = choices.first,
+              let message = firstChoice["message"] as? [String: Any],
+              let text = message["content"] as? String else {
+            throw VibeIntelligenceError.emptyResponse
+        }
+        
+        return text
+    }
+    
+    // MARK: - Gemini API
+    
+    private func callGemini(systemPrompt: String, userText: String) async throws -> String {
+        guard let apiKey = keychainManager.getAPIKey(for: .gemini) ?? ProcessInfo.processInfo.environment["GEMINI_API_KEY"],
+              !apiKey.isEmpty else {
+            throw VibeIntelligenceError.noAPIKey
+        }
+        
+        // Gemini uses query parameter for API key
+        var urlComponents = URLComponents(url: geminiURL, resolvingAgainstBaseURL: false)!
+        urlComponents.queryItems = [URLQueryItem(name: "key", value: apiKey)]
+        
+        var request = URLRequest(url: urlComponents.url!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 60
+        
+        let body: [String: Any] = [
+            "contents": [
+                [
+                    "parts": [
+                        ["text": "\(systemPrompt)\n\n---\n\nUser request:\n\(userText)"]
+                    ]
+                ]
+            ],
+            "generationConfig": [
+                "maxOutputTokens": 8192,
+                "temperature": 0.7
+            ]
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw VibeIntelligenceError.networkError("Invalid response")
+        }
+        
+        if httpResponse.statusCode != 200 {
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let error = errorJson["error"] as? [String: Any],
+               let message = error["message"] as? String {
+                throw VibeIntelligenceError.apiError(message)
+            }
+            throw VibeIntelligenceError.apiError("HTTP \(httpResponse.statusCode)")
+        }
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let candidates = json["candidates"] as? [[String: Any]],
+              let firstCandidate = candidates.first,
+              let content = firstCandidate["content"] as? [String: Any],
+              let parts = content["parts"] as? [[String: Any]],
+              let firstPart = parts.first,
+              let text = firstPart["text"] as? String else {
             throw VibeIntelligenceError.emptyResponse
         }
         
