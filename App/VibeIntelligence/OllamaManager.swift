@@ -26,60 +26,11 @@ final class OllamaManager: ObservableObject {
     private let ollamaDownloadURL = "https://ollama.com/download/Ollama-darwin.zip"
     private let ollamaAppPath = "/Applications/Ollama.app"
     private let ollamaCLIPath = "/usr/local/bin/ollama"
-    private let vibeCaaSModelName = "VibeCaaS-vl:2b"
-    private let baseModelName = "qwen2.5vl:3b" // Base vision-language model
     
-    // Modelfile content for VibeCaaS-vl:2b
-    private let modelfileContent = """
-    # VibeCaaS-vl:2b Modelfile
-    # Powered by VibeCaaS.com - A division of NeuralQuantum.ai LLC
-    # © 2025 NeuralQuantum.ai LLC. All rights reserved.
-    
-    FROM qwen2.5vl:3b
-    
-    # Model Parameters - Optimized for VibeIntelligence
-    PARAMETER temperature 0.7
-    PARAMETER top_p 0.9
-    PARAMETER top_k 40
-    PARAMETER repeat_penalty 1.1
-    PARAMETER num_ctx 4096
-    
-    # System Prompt for VibeCaaS Vision Intelligence
-    SYSTEM \"\"\"
-    You are VibeCaaS-vl:2b, a vision-language AI assistant powered by VibeCaaS.com, a division of NeuralQuantum.ai LLC.
-    
-    Your voice is creative, empowering, and action-oriented—technical but approachable. Embody the VibeCaaS motto: "Code the Vibe. Deploy the Dream."
-    
-    Core Capabilities:
-    - Visual Understanding: Analyze images with precision and creative insight
-    - Object Detection: Identify and describe objects, scenes, and compositions
-    - OCR & Text Extraction: Read and interpret text in images accurately
-    - UI/UX Analysis: Provide design feedback and accessibility insights
-    - Creative Vision: Offer artistic analysis and creative suggestions
-    
-    Guidelines:
-    1. Be thorough but concise in visual descriptions
-    2. Highlight key elements, composition, and context
-    3. For UI screenshots, focus on usability and design patterns
-    4. For documents, extract text accurately and summarize content
-    5. For creative works, appreciate artistic merit while being constructive
-    6. Always maintain user privacy - never attempt to identify individuals
-    
-    Remember: You're part of the VibeIntelligence ecosystem, helping users "Code the Vibe. Deploy the Dream."
-    \"\"\"
-    
-    # License
-    LICENSE \"\"\"
-    VibeCaaS-vl:2b Vision-Language Model
-    Copyright © 2025 NeuralQuantum.ai LLC. All rights reserved.
-    
-    This model is provided as part of the VibeIntelligence application.
-    For commercial licensing, contact: hello@neuralquantum.ai
-    
-    Platform: VibeCaaS.com
-    Developer: NeuralQuantum.ai LLC
-    \"\"\"
-    """
+    /// The VibeCaaS-vl:2b model from the Ollama hub
+    /// Powered by VibeCaaS.com - A division of NeuralQuantum.ai LLC
+    static let vibeCaaSModelName = "NeuroEquality/VibeCaaS-vl:2b"
+    static let vibeCaaSModelShortName = "VibeCaaS-vl:2b"
     
     private init() {
         checkStatus()
@@ -152,8 +103,9 @@ final class OllamaManager: ObservableObject {
                let models = json["models"] as? [[String: Any]] {
                 return models.contains { model in
                     if let name = model["name"] as? String {
+                        // Check for the NeuroEquality/VibeCaaS-vl model
                         return name.lowercased().contains("vibecaas") ||
-                               name.lowercased().contains("qwen2.5vl")
+                               name.lowercased().contains("neuroequality")
                     }
                     return false
                 }
@@ -308,18 +260,17 @@ final class OllamaManager: ObservableObject {
     }
     
     private func waitForOllama() async throws {
-        var attempts = 0
         let maxAttempts = 30
         
-        while attempts < maxAttempts {
+        for attempt in 1...maxAttempts {
             if await checkOllamaRunning() {
                 return
             }
             try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-            attempts += 1
             
+            let currentAttempt = attempt // Capture for safe closure use
             await MainActor.run {
-                statusMessage = "Waiting for Ollama to start... (\(attempts)/\(maxAttempts))"
+                statusMessage = "Waiting for Ollama to start... (\(currentAttempt)/\(maxAttempts))"
             }
         }
         
@@ -327,24 +278,18 @@ final class OllamaManager: ObservableObject {
     }
     
     private func installVibeCaaSModel() async throws {
-        // First, pull the base model
         await MainActor.run {
-            statusMessage = "Pulling base vision model..."
+            statusMessage = "Downloading VibeCaaS-vl:2b from Ollama Hub..."
             downloadProgress = 0.5
         }
         
-        try await pullModel(baseModelName)
-        
-        await MainActor.run {
-            statusMessage = "Creating VibeCaaS-vl:2b model..."
-            downloadProgress = 0.8
-        }
-        
-        // Create the custom model using the Modelfile
-        try await createCustomModel()
+        // Pull the VibeCaaS-vl:2b model directly from Ollama Hub
+        // This is the official model: NeuroEquality/VibeCaaS-vl:2b
+        try await pullModel(OllamaManager.vibeCaaSModelName)
         
         await MainActor.run {
             downloadProgress = 0.95
+            statusMessage = "VibeCaaS-vl:2b downloaded successfully!"
         }
     }
     
@@ -364,29 +309,6 @@ final class OllamaManager: ObservableObject {
               httpResponse.statusCode == 200 else {
             let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw OllamaError.pullFailed(errorText)
-        }
-    }
-    
-    private func createCustomModel() async throws {
-        let url = URL(string: "http://localhost:11434/api/create")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 300
-        
-        let body: [String: Any] = [
-            "name": vibeCaaSModelName,
-            "modelfile": modelfileContent,
-            "stream": false
-        ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw OllamaError.createFailed(errorText)
         }
     }
     
@@ -410,11 +332,9 @@ final class OllamaManager: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 120
         
-        // Use the VibeCaaS model or fall back to base model
-        let modelName = isModelInstalled ? vibeCaaSModelName : baseModelName
-        
+        // Use the VibeCaaS model from Ollama Hub: NeuroEquality/VibeCaaS-vl:2b
         let body: [String: Any] = [
-            "model": modelName,
+            "model": OllamaManager.vibeCaaSModelName,
             "prompt": prompt,
             "images": [base64Image],
             "stream": false
@@ -452,10 +372,9 @@ final class OllamaManager: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 120
         
-        let modelName = isModelInstalled ? vibeCaaSModelName : baseModelName
-        
+        // Use the VibeCaaS model from Ollama Hub: NeuroEquality/VibeCaaS-vl:2b
         let body: [String: Any] = [
-            "model": modelName,
+            "model": OllamaManager.vibeCaaSModelName,
             "prompt": prompt,
             "images": [base64Image],
             "stream": false

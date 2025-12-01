@@ -374,11 +374,9 @@ class VibeIntelligenceService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 120
         
-        // Use VibeCaaS-vl model if installed, otherwise fall back to base
-        let modelName = OllamaManager.shared.isModelInstalled ? "VibeCaaS-vl:2b" : "qwen2.5vl:3b"
-        
+        // Use VibeCaaS-vl model from Ollama Hub: NeuroEquality/VibeCaaS-vl:2b
         let body: [String: Any] = [
-            "model": modelName,
+            "model": OllamaManager.vibeCaaSModelName,
             "system": systemPrompt,
             "prompt": userText,
             "stream": false
