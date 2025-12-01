@@ -123,6 +123,9 @@ class WindowManager: ObservableObject {
         
         // Mark initialization complete - future didSet calls will execute side effects
         isInitialized = true
+        
+        // Sync initial dock visibility state after initialization is complete
+        updateDockVisibility()
     }
     
     func updateDockVisibility() {

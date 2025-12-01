@@ -206,11 +206,13 @@ class ConfigManager: ObservableObject {
             try? data.write(to: historyFile)
         }
         
-        // Clean up old history
-        cleanupHistory()
+        // Clean up old history using user-configured retention setting
+        let historyRetention = UserDefaults.standard.integer(forKey: "historyRetention")
+        let maxEntries = historyRetention > 0 ? historyRetention : 100 // Default to 100 if not set
+        cleanupHistory(maxEntries: maxEntries)
     }
     
-    private func cleanupHistory(maxEntries: Int = 100) {
+    private func cleanupHistory(maxEntries: Int) {
         guard let files = try? FileManager.default.contentsOfDirectory(at: historyDir, includingPropertiesForKeys: [.creationDateKey]) else {
             return
         }
