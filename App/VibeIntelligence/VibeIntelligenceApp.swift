@@ -100,12 +100,20 @@ class WindowManager: ObservableObject {
     @Published var isMainWindowVisible = false
     
     private init() {
-        self.showDockIcon = UserDefaults.standard.bool(forKey: "showDockIcon")
-        self.showMenuBarIcon = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true
+        // Check if keys exist before reading to avoid triggering didSet observers during init
+        let dockIconExists = UserDefaults.standard.object(forKey: "showDockIcon") != nil
+        let menuBarIconExists = UserDefaults.standard.object(forKey: "showMenuBarIcon") != nil
         
-        // Default to showing dock icon on first launch
-        if UserDefaults.standard.object(forKey: "showDockIcon") == nil {
-            self.showDockIcon = true
+        // Set values only once - default to true on first launch
+        self.showDockIcon = dockIconExists ? UserDefaults.standard.bool(forKey: "showDockIcon") : true
+        self.showMenuBarIcon = menuBarIconExists ? UserDefaults.standard.bool(forKey: "showMenuBarIcon") : true
+        
+        // Persist defaults on first launch (without triggering didSet since we're still in init)
+        if !dockIconExists {
+            UserDefaults.standard.set(true, forKey: "showDockIcon")
+        }
+        if !menuBarIconExists {
+            UserDefaults.standard.set(true, forKey: "showMenuBarIcon")
         }
     }
     
