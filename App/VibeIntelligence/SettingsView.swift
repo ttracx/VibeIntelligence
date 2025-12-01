@@ -7,15 +7,24 @@
 //
 
 import SwiftUI
+import ServiceManagement
 
 struct SettingsView: View {
     @EnvironmentObject var configManager: ConfigManager
+    @EnvironmentObject var windowManager: WindowManager
     
     var body: some View {
         TabView {
             GeneralSettingsTab()
+                .environmentObject(windowManager)
                 .tabItem {
                     Label("General", systemImage: "gearshape")
+                }
+            
+            AppearanceSettingsTab()
+                .environmentObject(windowManager)
+                .tabItem {
+                    Label("Appearance", systemImage: "paintbrush")
                 }
             
             AIProviderSettingsTab()
@@ -28,26 +37,42 @@ struct SettingsView: View {
                     Label("Templates", systemImage: "doc.text")
                 }
             
+            ShortcutsSettingsTab()
+                .tabItem {
+                    Label("Shortcuts", systemImage: "keyboard")
+                }
+            
             AboutTab()
                 .tabItem {
                     Label("About", systemImage: "info.circle")
                 }
         }
-        .frame(width: 550, height: 450)
+        .frame(width: 600, height: 480)
     }
 }
 
 // MARK: - General Settings
 struct GeneralSettingsTab: View {
+    @EnvironmentObject var windowManager: WindowManager
     @AppStorage("defaultMode") private var defaultMode = "enhance"
     @AppStorage("notifyEnabled") private var notifyEnabled = true
     @AppStorage("historyEnabled") private var historyEnabled = true
-    @AppStorage("launchAtLogin") private var launchAtLogin = false
-    
-    let modes = ["enhance", "agent", "spec", "simplify", "proofread"]
+    @AppStorage("historyRetention") private var historyRetention = 100
+    @State private var launchAtLogin = false
     
     var body: some View {
         Form {
+            Section("Startup") {
+                Toggle("Launch at Login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, newValue in
+                        setLaunchAtLogin(newValue)
+                    }
+                
+                Toggle("Show Onboarding on First Launch", isOn: .constant(false))
+                    .disabled(true)
+                    .help("Onboarding is shown automatically on first launch")
+            }
+            
             Section("Default Behavior") {
                 Picker("Default Mode", selection: $defaultMode) {
                     Text("Enhance").tag("enhance")
@@ -56,57 +81,142 @@ struct GeneralSettingsTab: View {
                     Text("Simplify").tag("simplify")
                     Text("Proofread").tag("proofread")
                 }
-                
-                Toggle("Show Notifications", isOn: $notifyEnabled)
-                Toggle("Save History", isOn: $historyEnabled)
-                Toggle("Launch at Login", isOn: $launchAtLogin)
+                .pickerStyle(.menu)
             }
             
-            Section("Keyboard Shortcuts") {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Configure shortcuts in System Settings:")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("Settings → Keyboard → Keyboard Shortcuts → Services")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Button("Open Keyboard Settings") {
-                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.keyboard?Shortcuts")!)
-                    }
-                    .padding(.top, 4)
-                }
+            Section("Notifications") {
+                Toggle("Show Notifications", isOn: $notifyEnabled)
                 
-                Divider()
-                    .padding(.vertical, 8)
+                Text("Notifications inform you when transformations complete")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Section("History") {
+                Toggle("Save Transformation History", isOn: $historyEnabled)
                 
-                Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 8) {
-                    GridRow {
-                        Text("⌃⌥E")
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundColor(.vibePurple)
-                        Text("Enhance")
+                if historyEnabled {
+                    Picker("Keep History", selection: $historyRetention) {
+                        Text("Last 25 items").tag(25)
+                        Text("Last 50 items").tag(50)
+                        Text("Last 100 items").tag(100)
+                        Text("Last 250 items").tag(250)
                     }
-                    GridRow {
-                        Text("⌃⌥A")
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundColor(.vibePurple)
-                        Text("Agent Prompt")
-                    }
-                    GridRow {
-                        Text("⌃⌥S")
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundColor(.vibePurple)
-                        Text("Technical Spec")
-                    }
-                    GridRow {
-                        Text("⌃⌥D")
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundColor(.vibePurple)
-                        Text("Simplify")
+                    .pickerStyle(.menu)
+                    
+                    HStack {
+                        Button("Clear History") {
+                            clearHistory()
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button("Open History Folder") {
+                            openHistoryFolder()
+                        }
+                        .buttonStyle(.bordered)
                     }
                 }
+            }
+            
+            Section("Data") {
+                Button("Reset All Settings") {
+                    resetSettings()
+                }
+                .buttonStyle(.bordered)
+                .foregroundColor(.red)
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+        .onAppear {
+            // Check current launch at login status
+            launchAtLogin = SMAppService.mainApp.status == .enabled
+        }
+    }
+    
+    private func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            print("Failed to update launch at login: \(error)")
+        }
+    }
+    
+    private func clearHistory() {
+        let historyDir = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/VibeIntelligence/history")
+        
+        if let files = try? FileManager.default.contentsOfDirectory(at: historyDir, includingPropertiesForKeys: nil) {
+            for file in files {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
+    }
+    
+    private func openHistoryFolder() {
+        let url = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/VibeIntelligence/history")
+        NSWorkspace.shared.open(url)
+    }
+    
+    private func resetSettings() {
+        // Reset UserDefaults
+        if let bundleID = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: bundleID)
+        }
+    }
+}
+
+// MARK: - Appearance Settings
+struct AppearanceSettingsTab: View {
+    @EnvironmentObject var windowManager: WindowManager
+    @AppStorage("accentColorChoice") private var accentColor = "purple"
+    
+    var body: some View {
+        Form {
+            Section("App Visibility") {
+                Toggle("Show in Dock", isOn: $windowManager.showDockIcon)
+                
+                Text("When disabled, the app runs only in the menu bar")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Toggle("Show in Menu Bar", isOn: $windowManager.showMenuBarIcon)
+                    .disabled(true) // Menu bar is always shown
+                
+                Text("Menu bar icon is always visible")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Section("Visual Style") {
+                Picker("Accent Color", selection: $accentColor) {
+                    HStack {
+                        Circle().fill(Color.vibePurple).frame(width: 12, height: 12)
+                        Text("Vibe Purple")
+                    }.tag("purple")
+                    
+                    HStack {
+                        Circle().fill(Color.aquaTeal).frame(width: 12, height: 12)
+                        Text("Aqua Teal")
+                    }.tag("teal")
+                    
+                    HStack {
+                        Circle().fill(Color.signalAmber).frame(width: 12, height: 12)
+                        Text("Signal Amber")
+                    }.tag("amber")
+                }
+                .pickerStyle(.radioGroup)
+            }
+            
+            Section("Window Behavior") {
+                Text("Main window can be opened from the menu bar or dock icon.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -136,6 +246,13 @@ struct AIProviderSettingsTab: View {
                     }
                 }
                 .pickerStyle(.radioGroup)
+                .onChange(of: configManager.currentProvider) { _, newValue in
+                    configManager.setProvider(newValue)
+                }
+                
+                Text("Auto-detect tries local providers first, then cloud")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             
             if configManager.currentProvider == .anthropic || configManager.currentProvider == .auto {
@@ -163,7 +280,15 @@ struct AIProviderSettingsTab: View {
                         .tint(.vibePurple)
                         .disabled(apiKey.isEmpty)
                         
-                        Link("Get API Key", destination: URL(string: "https://console.anthropic.com/")!)
+                        if configManager.loadAPIKey() != nil {
+                            Button("Remove Key") {
+                                configManager.deleteAPIKey()
+                                apiKey = ""
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        
+                        Link("Get API Key →", destination: URL(string: "https://console.anthropic.com/")!)
                             .buttonStyle(.bordered)
                     }
                 }
@@ -171,8 +296,15 @@ struct AIProviderSettingsTab: View {
             
             if configManager.currentProvider == .ollama || configManager.currentProvider == .auto {
                 Section("Ollama") {
-                    TextField("Model Name", text: $ollamaModel)
-                        .textFieldStyle(.roundedBorder)
+                    HStack {
+                        TextField("Model Name", text: $ollamaModel)
+                            .textFieldStyle(.roundedBorder)
+                        
+                        Button("Save") {
+                            configManager.ollamaModel = ollamaModel
+                        }
+                        .buttonStyle(.bordered)
+                    }
                     
                     HStack {
                         Circle()
@@ -185,7 +317,7 @@ struct AIProviderSettingsTab: View {
                         
                         Spacer()
                         
-                        Link("Download Ollama", destination: URL(string: "https://ollama.ai")!)
+                        Link("Download Ollama →", destination: URL(string: "https://ollama.ai")!)
                             .font(.caption)
                     }
                 }
@@ -204,9 +336,13 @@ struct AIProviderSettingsTab: View {
                         
                         Spacer()
                         
-                        Link("Download LM Studio", destination: URL(string: "https://lmstudio.ai")!)
+                        Link("Download LM Studio →", destination: URL(string: "https://lmstudio.ai")!)
                             .font(.caption)
                     }
+                    
+                    Text("Start the local server in LM Studio to use it")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
             
@@ -243,6 +379,7 @@ struct AIProviderSettingsTab: View {
         .padding()
         .onAppear {
             apiKey = configManager.loadAPIKey() ?? ""
+            ollamaModel = configManager.ollamaModel
         }
     }
     
@@ -364,20 +501,113 @@ struct TemplateInfo {
     let url: URL
 }
 
+// MARK: - Shortcuts Settings
+struct ShortcutsSettingsTab: View {
+    var body: some View {
+        Form {
+            Section("System Shortcuts") {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Configure shortcuts in System Settings:")
+                        .font(.body)
+                    
+                    Text("Settings → Keyboard → Keyboard Shortcuts → Services → VibeIntelligence")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Button("Open Keyboard Settings") {
+                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.keyboard?Shortcuts")!)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.vibePurple)
+                }
+            }
+            
+            Section("Default Shortcuts") {
+                Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 12) {
+                    GridRow {
+                        Text("⌃⌥E")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.vibePurple)
+                            .frame(width: 60, alignment: .leading)
+                        Text("Enhance selected text")
+                    }
+                    GridRow {
+                        Text("⌃⌥A")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.vibePurple)
+                            .frame(width: 60, alignment: .leading)
+                        Text("Convert to Agent Prompt")
+                    }
+                    GridRow {
+                        Text("⌃⌥S")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.vibePurple)
+                            .frame(width: 60, alignment: .leading)
+                        Text("Generate Technical Spec")
+                    }
+                    GridRow {
+                        Text("⌃⌥D")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.vibePurple)
+                            .frame(width: 60, alignment: .leading)
+                        Text("Simplify text")
+                    }
+                }
+            }
+            
+            Section("In-App Shortcuts") {
+                Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 12) {
+                    GridRow {
+                        Text("⌘↩")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.aquaTeal)
+                            .frame(width: 60, alignment: .leading)
+                        Text("Transform text")
+                    }
+                    GridRow {
+                        Text("⌘N")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.aquaTeal)
+                            .frame(width: 60, alignment: .leading)
+                        Text("New transformation")
+                    }
+                    GridRow {
+                        Text("⌘,")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.aquaTeal)
+                            .frame(width: 60, alignment: .leading)
+                        Text("Open Settings")
+                    }
+                    GridRow {
+                        Text("⌘Q")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.aquaTeal)
+                            .frame(width: 60, alignment: .leading)
+                        Text("Quit app")
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+}
+
 // MARK: - About Tab
 struct AboutTab: View {
     var body: some View {
         VStack(spacing: 24) {
             // Logo
-            Image(systemName: "waveform.circle.fill")
-                .font(.system(size: 80))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.vibePurple, .aquaTeal],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+            ZStack {
+                Circle()
+                    .fill(LinearGradient.vibePrimary)
+                    .frame(width: 100, height: 100)
+                    .shadow(color: Color.vibePurple.opacity(0.3), radius: 15, y: 8)
+                
+                Image(systemName: "waveform.circle.fill")
+                    .font(.system(size: 50))
+                    .foregroundColor(.white)
+            }
             
             // Title
             VStack(spacing: 4) {
@@ -389,7 +619,7 @@ struct AboutTab: View {
                     .font(.title3)
                     .foregroundColor(.secondary)
                 
-                Text("Version 1.0.0")
+                Text("Version 1.0.0 (Build 1)")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.top, 4)
@@ -399,18 +629,23 @@ struct AboutTab: View {
                 .frame(width: 200)
             
             // Brand
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
                 Text("Code the Vibe. Deploy the Dream.")
                     .font(.headline)
-                    .foregroundColor(.vibePurple)
+                    .foregroundStyle(LinearGradient.vibePrimary)
                 
-                HStack(spacing: 16) {
-                    Link("VibeCaaS.com", destination: URL(string: "https://vibecaas.com")!)
-                        .foregroundColor(.aquaTeal)
+                HStack(spacing: 20) {
+                    Link(destination: URL(string: "https://vibecaas.com")!) {
+                        Label("VibeCaaS.com", systemImage: "globe")
+                    }
+                    .foregroundColor(.aquaTeal)
                     
-                    Link("Documentation", destination: URL(string: "https://github.com/vibecaas/vibeintelligence")!)
-                        .foregroundColor(.aquaTeal)
+                    Link(destination: URL(string: "https://github.com/vibecaas/vibeintelligence")!) {
+                        Label("GitHub", systemImage: "link")
+                    }
+                    .foregroundColor(.aquaTeal)
                 }
+                .font(.caption)
             }
             
             Spacer()
@@ -434,4 +669,5 @@ struct AboutTab: View {
 #Preview {
     SettingsView()
         .environmentObject(ConfigManager.shared)
+        .environmentObject(WindowManager.shared)
 }

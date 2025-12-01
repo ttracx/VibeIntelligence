@@ -10,7 +10,7 @@
 
 ## What is VibeIntelligence?
 
-VibeIntelligence adds Apple Intelligence-style writing tools to your right-click context menu. Select any text, right-click, and transform it instantly with AI.
+VibeIntelligence is a native macOS app that brings AI-powered text transformation to your fingertips. Access it from the **menu bar**, **dock**, or **right-click context menu**. Select any text, transform it instantly with AI.
 
 **Perfect for:**
 - 🤖 **AI Agents** — Optimize prompts for Cursor, Claude Code, Copilot, Windsurf
@@ -20,67 +20,136 @@ VibeIntelligence adds Apple Intelligence-style writing tools to your right-click
 
 ## ✨ Features
 
+### 🖥️ Native macOS App
+- **Menu Bar + Dock** — Choose your preferred access method
+- **Beautiful UI** — Modern, native SwiftUI interface
+- **Quick Actions** — Transform clipboard text instantly
+- **Drag & Drop** — Drop text files directly into the app
+
+### 🎛️ Transformation Modes
+- **Enhance** — Make text comprehensive and robust
+- **Agent Prompt** — Optimize for AI coding agents
+- **Technical Spec** — Expand to full specification
+- **Simplify** — Strip to essential clarity
+- **Proofread** — Fix grammar and polish
+
+### 🔧 Additional Features
 - **Right-click integration** — Access AI tools from any app's context menu
-- **Multiple modes** — Enhance, Agent Prompt, Technical Spec, Simplify, Proofread
 - **Local AI support** — Works with Ollama and LM Studio
 - **Custom templates** — Create your own transformation templates
 - **History tracking** — Review and reuse past transformations
-- **VibeCaaS branded** — Consistent messaging with music/flow metaphors
+- **Keyboard shortcuts** — Fast access with configurable hotkeys
 
 ## 🚀 Quick Start
 
-### Installation
+### Building the App
 
 ```bash
-cd ~/Projects/VibeIntelligence
+cd ~/VibeIntelligence/App
+xcodebuild -project VibeIntelligence.xcodeproj -scheme VibeIntelligence -configuration Release build
+```
+
+Or open `VibeIntelligence.xcodeproj` in Xcode and press ⌘B.
+
+### Running the App
+
+1. **Open the built app** from `~/VibeIntelligence/App/VibeIntelligence.app`
+2. **Complete the onboarding** — Select your AI provider and configure settings
+3. **Start transforming!** — Use the menu bar icon or dock app
+
+### Services Installation (Optional)
+
+For right-click context menu integration:
+
+```bash
+cd ~/VibeIntelligence
 chmod +x install.sh
 ./install.sh
 ```
 
-### Setup
+## ⌨️ Keyboard Shortcuts
 
-1. **Set your API key** (choose one method):
+### Global Shortcuts (from Services)
+| Shortcut | Action |
+|----------|--------|
+| `⌃⌥E` | Enhance selected text |
+| `⌃⌥A` | Convert to Agent Prompt |
+| `⌃⌥S` | Generate Technical Spec |
+| `⌃⌥D` | Simplify text |
 
-   ```bash
-   # Environment variable
-   export ANTHROPIC_API_KEY='your-key-here'
-   
-   # Or add to config file
-   # ~/.config/VibeIntelligence/config.json
-   ```
+### In-App Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| `⌘↩` | Transform text |
+| `⌘N` | New transformation |
+| `⌘,` | Open Settings |
+| `⌘Q` | Quit app |
 
-2. **Enable Services**:
-   - System Settings → Privacy & Security → Accessibility
-   - Allow Automator to control your computer
-   - System Settings → Keyboard → Keyboard Shortcuts → Services
-   - Enable all "VibeIntelligence" services
+## 🎛️ App Settings
 
-3. **Test it**:
-   - Select text anywhere
-   - Right-click → Services → VibeIntelligence - Enhance
-   - Watch your text transform! ✨
+### General
+- **Show in Dock** — Toggle dock icon visibility
+- **Launch at Login** — Start with macOS
+- **Notifications** — Enable/disable transformation notifications
+- **History** — Configure history retention
 
-## 🎛️ Modes
+### AI Provider
+- **Auto-detect** — Automatically use best available provider
+- **Anthropic Claude** — Cloud-based, requires API key
+- **Ollama** — Local AI, runs on your machine
+- **LM Studio** — Local AI with GUI
 
-| Mode | Service | Description |
-|------|---------|-------------|
-| **Enhance** | VibeIntelligence - Enhance | Make text comprehensive and robust |
-| **Agent Prompt** | VibeIntelligence - Agent Prompt | Optimize for AI coding agents |
-| **Technical Spec** | VibeIntelligence - Technical Spec | Expand to full specification |
-| **Simplify** | VibeIntelligence - Simplify | Strip to essential clarity |
-| **Custom** | VibeIntelligence - Custom | Use your own template |
+## 🤖 AI Provider Setup
 
-## ⌨️ Recommended Shortcuts
+### Anthropic Claude (Cloud)
 
-Set these in System Settings → Keyboard → Keyboard Shortcuts → Services:
+1. Get an API key from [console.anthropic.com](https://console.anthropic.com)
+2. Open VibeIntelligence Settings → AI Provider
+3. Enter your API key and click Save
 
-| Shortcut | Service |
-|----------|---------|
-| `⌃⌥E` | VibeIntelligence - Enhance |
-| `⌃⌥A` | VibeIntelligence - Agent Prompt |
-| `⌃⌥S` | VibeIntelligence - Technical Spec |
-| `⌃⌥D` | VibeIntelligence - Simplify |
-| `⌃⌥C` | VibeIntelligence - Custom |
+### Ollama (Local)
+
+```bash
+# Install Ollama
+brew install ollama
+
+# Pull a model
+ollama pull llama3.2
+
+# Ollama runs on http://localhost:11434
+```
+
+### LM Studio (Local)
+
+1. Download [LM Studio](https://lmstudio.ai)
+2. Load a model and start the local server
+3. Server runs on http://localhost:1234
+
+## 📝 Custom Templates
+
+Create templates in `~/.config/VibeIntelligence/templates/`:
+
+```markdown
+<!-- My Custom Template -->
+# Custom Template Name
+
+You are VibeIntelligence from VibeCaaS.com.
+
+Your system prompt here...
+
+Transform the input according to your rules.
+
+Output ONLY the transformed text.
+```
+
+### Included Templates
+
+- `default.md` — General enhancement
+- `api-endpoint.md` — REST API endpoint specification
+- `react-component.md` — React/TypeScript component spec
+- `user-story.md` — Agile user story format
+- `code-review.md` — Code review feedback
+- `bug-report.md` — Bug report template
 
 ## 💻 CLI Usage
 
@@ -93,14 +162,11 @@ VibeIntelligence --mode enhance --notify
 # Optimize for AI agents
 echo "create login form" | VibeIntelligence -m agent
 
-# Generate spec from file, save to file
+# Generate spec from file
 VibeIntelligence -m spec -f idea.txt -o file:spec.md
 
 # Use local Ollama
 VibeIntelligence -m enhance -p ollama
-
-# Show before/after diff
-pbpaste | VibeIntelligence -m simplify -d
 ```
 
 ### CLI Options
@@ -130,69 +196,6 @@ OPTIONS
     --help, -h            Show help
 ```
 
-## 🤖 Local AI Support
-
-### Ollama
-
-```bash
-# Install Ollama
-brew install ollama
-
-# Pull a model
-ollama pull llama3.2
-
-# Use with VibeIntelligence
-VibeIntelligence -m enhance -p ollama
-
-# Or set default
-export OLLAMA_MODEL=llama3.2
-export AI_PROVIDER=ollama
-```
-
-### LM Studio
-
-1. Download and install [LM Studio](https://lmstudio.ai)
-2. Start the local server (default: http://localhost:1234)
-3. Use with VibeIntelligence:
-
-```bash
-VibeIntelligence -m enhance -p lmstudio
-```
-
-## 📝 Custom Templates
-
-Create templates in `~/.config/VibeIntelligence/templates/`:
-
-```markdown
----
-name: My Template
-description: What it does
-author: Your Name
-version: 1.0.0
----
-You are VibeIntelligence from VibeCaaS.com.
-
-Your system prompt here...
-
-Transform the input according to your rules.
-
-Output ONLY the transformed text.
-```
-
-### Included Templates
-
-- `api-endpoint.md` — REST API endpoint specification
-- `react-component.md` — React/TypeScript component spec
-- `user-story.md` — Agile user story format
-- `code-review.md` — Code review feedback
-- `bug-report.md` — Bug report template
-- `default.md` — General enhancement
-
-Use with:
-```bash
-VibeIntelligence -m custom -T api-endpoint
-```
-
 ## 🎨 Brand Identity
 
 VibeIntelligence follows VibeCaaS design language:
@@ -202,8 +205,6 @@ VibeIntelligence follows VibeCaaS design language:
 | **Primary** | Vibe Purple `#6D4AFF` |
 | **Secondary** | Aqua Teal `#14B8A6` |
 | **Accent** | Signal Amber `#FF8C00` |
-| **Font (Sans)** | Inter |
-| **Font (Mono)** | JetBrains Mono |
 
 ### Notification Messages
 
@@ -218,25 +219,40 @@ VibeIntelligence follows VibeCaaS design language:
 
 ```
 VibeIntelligence/
-├── Services/                    # macOS Automator workflows
+├── App/                            # macOS Native App
+│   ├── VibeIntelligence.xcodeproj
+│   ├── VibeIntelligence/
+│   │   ├── VibeIntelligenceApp.swift
+│   │   ├── MainWindowView.swift    # Main dashboard
+│   │   ├── MenuBarView.swift       # Menu bar popover
+│   │   ├── SettingsView.swift      # App settings
+│   │   ├── HistoryView.swift       # Transformation history
+│   │   ├── TemplatesView.swift     # Template management
+│   │   ├── OnboardingView.swift    # First-run setup
+│   │   ├── QuickTransformView.swift
+│   │   ├── ConfigManager.swift
+│   │   ├── VibeIntelligenceService.swift
+│   │   └── BrandColors.swift
+│   └── VibeIntelligence.app        # Built app
+├── Services/                       # macOS Automator workflows
 │   ├── VibeIntelligence - Enhance.workflow
 │   ├── VibeIntelligence - Agent Prompt.workflow
 │   ├── VibeIntelligence - Technical Spec.workflow
 │   ├── VibeIntelligence - Simplify.workflow
 │   └── VibeIntelligence - Custom.workflow
 ├── bin/
-│   └── VibeIntelligence         # Core CLI engine
+│   └── VibeIntelligence            # Core CLI engine
 ├── config/
-│   ├── config.json              # User preferences
-│   ├── brand.json               # VibeCaaS brand tokens
-│   └── templates/               # Custom prompt templates
+│   ├── config.json
+│   ├── brand.json
+│   └── templates/
 ├── logs/
-│   └── VibeIntelligence.log     # Activity log
+│   └── VibeIntelligence.log
 ├── assets/
-│   └── icon.png                 # App icon
-├── install.sh                   # Installation script
-├── uninstall.sh                 # Clean removal
-└── README.md                    # This file
+│   └── icon.svg
+├── install.sh
+├── uninstall.sh
+└── README.md
 ```
 
 ## 🔧 Configuration
@@ -250,47 +266,44 @@ User config: `~/.config/VibeIntelligence/config.json`
     "notify": true,
     "history_enabled": true,
     "max_history": 100,
-    "brand_context": true
+    "show_dock_icon": true
 }
 ```
 
 ## 🐛 Troubleshooting
 
-### Services not appearing
+### App doesn't appear in dock
+- Open Settings → Appearance → Enable "Show in Dock"
 
+### Services not appearing in context menu
 1. Restart the Services database:
    ```bash
    /System/Library/CoreServices/pbs -flush
    ```
-
 2. Log out and log back in
-
 3. Check permissions in System Settings → Privacy & Security
 
 ### API errors
+1. Verify API key is set in Settings → AI Provider
+2. Test connection using the "Test Provider" button
+3. Check logs: `~/.config/VibeIntelligence/logs/`
 
-1. Verify API key is set:
-   ```bash
-   echo $ANTHROPIC_API_KEY
-   ```
-
-2. Check logs:
-   ```bash
-   tail -f ~/Projects/VibeIntelligence/logs/VibeIntelligence.log
-   ```
-
-### Text not replaced
-
-1. Ensure the app has accessibility permissions
-2. Try using clipboard mode instead of replace mode
-3. Some apps (like Terminal) don't support text replacement
+### Local AI not detected
+1. Ensure Ollama or LM Studio is running
+2. Check that local server is accessible
+3. Try the Test Connection button in Settings
 
 ## 🗑️ Uninstallation
 
 ```bash
-cd ~/Projects/VibeIntelligence
+cd ~/VibeIntelligence
 ./uninstall.sh
 ```
+
+Or manually:
+1. Quit the app
+2. Delete `~/VibeIntelligence/App/VibeIntelligence.app`
+3. Delete `~/.config/VibeIntelligence/` (optional, keeps your settings)
 
 ## 📜 License
 

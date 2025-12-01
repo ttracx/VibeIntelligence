@@ -7,35 +7,131 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct VibeIntelligenceApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var configManager = ConfigManager.shared
+    @StateObject private var windowManager = WindowManager.shared
     
     var body: some Scene {
-        // Menu Bar Extra with window style
+        // Menu Bar Extra with popover style
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(configManager)
+                .environmentObject(windowManager)
         } label: {
-            Label("VibeIntelligence", systemImage: "waveform.circle.fill")
+            HStack(spacing: 4) {
+                Image(systemName: "waveform.circle.fill")
+                    .symbolRenderingMode(.hierarchical)
+            }
         }
         .menuBarExtraStyle(.window)
+        
+        // Main Window - Dashboard
+        Window("VibeIntelligence", id: "main") {
+            MainWindowView()
+                .environmentObject(configManager)
+                .environmentObject(windowManager)
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 900, height: 650)
+        .defaultPosition(.center)
+        .commands {
+            CommandGroup(replacing: .newItem) {
+                Button("New Transformation") {
+                    windowManager.showMainWindow()
+                }
+                .keyboardShortcut("n", modifiers: .command)
+            }
+            
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates...") {
+                    // Future: implement update check
+                }
+            }
+        }
         
         // Settings Window
         Settings {
             SettingsView()
                 .environmentObject(configManager)
+                .environmentObject(windowManager)
         }
         
-        // Main Window (optional - for dock access)
-        Window("VibeIntelligence", id: "main") {
-            ContentView()
+        // History Window
+        Window("History", id: "history") {
+            HistoryView()
+                .environmentObject(configManager)
+        }
+        .windowStyle(.titleBar)
+        .defaultSize(width: 700, height: 500)
+        
+        // Quick Transform Window (floating panel)
+        Window("Quick Transform", id: "quick") {
+            QuickTransformView()
                 .environmentObject(configManager)
         }
         .windowStyle(.hiddenTitleBar)
-        .defaultSize(width: 600, height: 500)
+        .windowResizability(.contentSize)
+        .defaultSize(width: 500, height: 400)
+    }
+}
+
+// MARK: - Window Manager
+class WindowManager: ObservableObject {
+    static let shared = WindowManager()
+    
+    @Published var showDockIcon: Bool {
+        didSet {
+            UserDefaults.standard.set(showDockIcon, forKey: "showDockIcon")
+            updateDockVisibility()
+        }
+    }
+    
+    @Published var showMenuBarIcon: Bool {
+        didSet {
+            UserDefaults.standard.set(showMenuBarIcon, forKey: "showMenuBarIcon")
+        }
+    }
+    
+    @Published var isMainWindowVisible = false
+    
+    private init() {
+        self.showDockIcon = UserDefaults.standard.bool(forKey: "showDockIcon")
+        self.showMenuBarIcon = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true
+        
+        // Default to showing dock icon on first launch
+        if UserDefaults.standard.object(forKey: "showDockIcon") == nil {
+            self.showDockIcon = true
+        }
+    }
+    
+    func updateDockVisibility() {
+        DispatchQueue.main.async {
+            if self.showDockIcon {
+                NSApp.setActivationPolicy(.regular)
+            } else {
+                NSApp.setActivationPolicy(.accessory)
+            }
+        }
+    }
+    
+    func showMainWindow() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        
+        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue.contains("main") ?? false }) {
+            window.makeKeyAndOrderFront(nil)
+        }
+    }
+    
+    func hideMainWindow() {
+        if !showDockIcon {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }
 
@@ -45,8 +141,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Ensure config directories exist
         ConfigManager.shared.ensureDirectoriesExist()
         
-        // Set activation policy to accessory (menu bar app)
-        NSApp.setActivationPolicy(.accessory)
+        // Request notification permissions
+        requestNotificationPermission()
+        
+        // Set initial activation policy based on user preference
+        let showDockIcon = UserDefaults.standard.object(forKey: "showDockIcon") as? Bool ?? true
+        if showDockIcon {
+            NSApp.setActivationPolicy(.regular)
+        } else {
+            NSApp.setActivationPolicy(.accessory)
+        }
+        
+        // Show onboarding on first launch
+        if !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                WindowManager.shared.showMainWindow()
+            }
+        }
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -57,14 +168,40 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         // Show main window when clicking dock icon
         if !flag {
-            for window in sender.windows {
-                if window.identifier?.rawValue == "main" {
-                    window.makeKeyAndOrderFront(self)
-                    NSApp.setActivationPolicy(.regular)
-                    return true
-                }
-            }
+            WindowManager.shared.showMainWindow()
         }
         return true
+    }
+    
+    func applicationWillTerminate(_ notification: Notification) {
+        // Cleanup if needed
+    }
+    
+    private func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if let error = error {
+                print("Notification permission error: \(error)")
+            }
+        }
+    }
+}
+
+// MARK: - Modern Notifications
+extension AppDelegate {
+    static func showNotification(title: String, message: String, sound: Bool = true) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = message
+        if sound {
+            content.sound = .default
+        }
+        
+        let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
     }
 }
