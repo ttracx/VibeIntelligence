@@ -118,6 +118,31 @@ notify_processing() {
 }
 
 # ============================================================================
+# PROCESSING OVERLAY (Visual Animation)
+# ============================================================================
+PROCESSING_FLAG_FILE="${CONFIG_DIR}/.processing"
+
+# Signal the app to show processing overlay
+overlay_start() {
+    local mode="${1:-enhance}"
+    mkdir -p "$(dirname "$PROCESSING_FLAG_FILE")"
+    echo "$mode" > "$PROCESSING_FLAG_FILE"
+    log_debug "Processing overlay started for mode: $mode"
+}
+
+# Signal the app to hide processing overlay
+overlay_stop() {
+    rm -f "$PROCESSING_FLAG_FILE"
+    log_debug "Processing overlay stopped"
+}
+
+# Ensure overlay is stopped on script exit (success or error)
+cleanup_overlay() {
+    overlay_stop
+}
+trap cleanup_overlay EXIT
+
+# ============================================================================
 # CONFIGURATION LOADING
 # ============================================================================
 load_config() {
@@ -827,8 +852,9 @@ main() {
     # Get system prompt
     local system_prompt=$(get_system_prompt "$MODE")
     
-    # Show processing notification
+    # Show processing notification and overlay
     notify_processing
+    overlay_start "$MODE"
     
     # Call AI
     [[ "$QUIET" != true ]] && echo "${VIBE_PURPLE}🎧 ${NOTIFY_PROCESSING}${RESET}" >&2
@@ -836,6 +862,7 @@ main() {
     local result
     if ! result=$(call_ai "$system_prompt" "$input_text"); then
         log_error "AI call failed"
+        overlay_stop
         notify_error
         exit 1
     fi

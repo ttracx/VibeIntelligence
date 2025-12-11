@@ -23,6 +23,10 @@
 		A100000122NEW000100000005 /* TemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000122NEW000100000014 /* TemplatesView.swift */; };
 		C63D51A3D066C2F8AB5B3D24 /* APIKeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DAE57FF984FA55169EA0528 /* APIKeysView.swift */; };
 		1261CC386D15BE049AC925FA /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAC8A00BACB5445779D25FE /* KeychainManager.swift */; };
+		A58D1188D62E43E2BAB77EAF /* OllamaManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C61A413914BAA96A566D3D6 /* OllamaManager.swift */; };
+		CB82D8FACDD1B9B90261827A /* OllamaSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */; };
+
+
 
 
 /* End PBXBuildFile section */
@@ -47,6 +51,10 @@
 		A100000122NEW000100000014 /* TemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatesView.swift; sourceTree = "<group>"; };
 		3DAE57FF984FA55169EA0528 /* APIKeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeysView.swift; sourceTree = "<group>"; };
 		DDAC8A00BACB5445779D25FE /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
+		0C61A413914BAA96A566D3D6 /* OllamaManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaManager.swift; sourceTree = "<group>"; };
+		EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaSetupView.swift; sourceTree = "<group>"; };
+
+
 
 
 /* End PBXFileReference section */
@@ -91,7 +99,9 @@
 				A1000001226B4A1D00000053 /* Preview Content */,
 			
 				3DAE57FF984FA55169EA0528 /* APIKeysView.swift */,
-				DDAC8A00BACB5445779D25FE /* KeychainManager.swift */,);
+				DDAC8A00BACB5445779D25FE /* KeychainManager.swift */,
+				0C61A413914BAA96A566D3D6 /* OllamaManager.swift */,
+				EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */,);
 			path = VibeIntelligence;
 			sourceTree = "<group>";
 		};
@@ -195,7 +205,9 @@
 				A1000001226B4A1D00000007 /* ConfigManager.swift in Sources */,
 			
 				C63D51A3D066C2F8AB5B3D24 /* APIKeysView.swift in Sources */,
-				1261CC386D15BE049AC925FA /* KeychainManager.swift in Sources */,);
+				1261CC386D15BE049AC925FA /* KeychainManager.swift in Sources */,
+				A58D1188D62E43E2BAB77EAF /* OllamaManager.swift in Sources */,
+				CB82D8FACDD1B9B90261827A /* OllamaSetupView.swift in Sources */,);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */

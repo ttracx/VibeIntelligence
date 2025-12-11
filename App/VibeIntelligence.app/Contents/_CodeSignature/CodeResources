@@ -4,9 +4,13 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>Resources/AppIcon.icns</key>
+		<data>
+		prr0E+DKnBLEBhWCx2sMHWc/qzg=
+		</data>
 		<key>Resources/Assets.car</key>
 		<data>
-		45/GLdb71TS409S7bOmxHfanEaA=
+		gGc6yLaJR7N8p12un3bvvEfLyvA=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -15,25 +19,39 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			scLWomTlolTNPIdJ3iFD+u82uEI=
+			xL5hOB4WghRLWf2ucF5oxqOpRUw=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"b1c2d6a264e5a254cd3c8749de2143faef36b842"</string>
+			<string>identifier "VibeIntelligence.debug" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: Phamy Xaypanya (G9FQUJ8463)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>MacOS/__preview.dylib</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			7jDQ3Qx1LiBGilwspjpS5ioiLnY=
+			7RzKJeDuoLRFlHV81hnPPlF02+s=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"ee30d0dd0c752e20468a5c2ca63a52e62a222e76"</string>
+			<string>identifier "__preview" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: Phamy Xaypanya (G9FQUJ8463)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
+		</dict>
+		<key>Resources/AppIcon.icns</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			59077K69tYRXYv8WTsH6Cn8QABSNE9/sVi3mu9bcYAw=
+			</data>
 		</dict>
 		<key>Resources/Assets.car</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			nw5d9Dcidtmp9BtFtN9ZS2+TL1tpAJsErBWWMLRDes4=
+			jMx7CS2kjaQmfCAoTWPoDm2IhxmqhFxq3ho7ehciUCg=
+			</data>
+		</dict>
+		<key>embedded.provisionprofile</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			GDTIbeQZpV36u5xyD9x5c1dSr+J0M0Wb7UK4Ku51GI0=
 			</data>
 		</dict>
 	</dict>

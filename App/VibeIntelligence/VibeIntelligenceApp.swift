@@ -156,9 +156,15 @@ class WindowManager: ObservableObject {
 
 // MARK: - App Delegate
 class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Processing overlay controller reference - initialized on launch
+    private var processingOverlay: ProcessingOverlayController?
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Ensure config directories exist
         ConfigManager.shared.ensureDirectoriesExist()
+        
+        // Initialize processing overlay (watches for CLI signals)
+        processingOverlay = ProcessingOverlayController.shared
         
         // Request notification permissions
         requestNotificationPermission()

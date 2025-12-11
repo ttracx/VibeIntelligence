@@ -39,6 +39,7 @@ VibeIntelligence is a native macOS app that brings AI-powered text transformatio
 - **Custom templates** — Create your own transformation templates
 - **History tracking** — Review and reuse past transformations
 - **Keyboard shortcuts** — Fast access with configurable hotkeys
+- **Processing Animation** — Beautiful overlay animation shows when AI is working
 
 ## 🚀 Quick Start
 

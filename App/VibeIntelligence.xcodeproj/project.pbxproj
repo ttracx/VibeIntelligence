@@ -25,6 +25,8 @@
 		1261CC386D15BE049AC925FA /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAC8A00BACB5445779D25FE /* KeychainManager.swift */; };
 		A58D1188D62E43E2BAB77EAF /* OllamaManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C61A413914BAA96A566D3D6 /* OllamaManager.swift */; };
 		CB82D8FACDD1B9B90261827A /* OllamaSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */; };
+		7F1D27C760DF509B7A87A4DF /* ProcessingOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7ED5C510F5FAC33EF63175 /* ProcessingOverlayView.swift */; };
+
 
 
 
@@ -53,6 +55,8 @@
 		DDAC8A00BACB5445779D25FE /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		0C61A413914BAA96A566D3D6 /* OllamaManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaManager.swift; sourceTree = "<group>"; };
 		EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaSetupView.swift; sourceTree = "<group>"; };
+		7F7ED5C510F5FAC33EF63175 /* ProcessingOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingOverlayView.swift; sourceTree = "<group>"; };
+
 
 
 
@@ -101,7 +105,8 @@
 				3DAE57FF984FA55169EA0528 /* APIKeysView.swift */,
 				DDAC8A00BACB5445779D25FE /* KeychainManager.swift */,
 				0C61A413914BAA96A566D3D6 /* OllamaManager.swift */,
-				EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */,);
+				EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */,
+				7F7ED5C510F5FAC33EF63175 /* ProcessingOverlayView.swift */,);
 			path = VibeIntelligence;
 			sourceTree = "<group>";
 		};
@@ -207,7 +212,8 @@
 				C63D51A3D066C2F8AB5B3D24 /* APIKeysView.swift in Sources */,
 				1261CC386D15BE049AC925FA /* KeychainManager.swift in Sources */,
 				A58D1188D62E43E2BAB77EAF /* OllamaManager.swift in Sources */,
-				CB82D8FACDD1B9B90261827A /* OllamaSetupView.swift in Sources */,);
+				CB82D8FACDD1B9B90261827A /* OllamaSetupView.swift in Sources */,
+				7F1D27C760DF509B7A87A4DF /* ProcessingOverlayView.swift in Sources */,);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */

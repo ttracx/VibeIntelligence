@@ -3,12 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>BuildMachineOSBuild</key>
-	<string>25C5048a</string>
+	<string>25C56</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
 	<string>VibeIntelligence</string>
 	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.vibecaas.vibeintelligence</string>
@@ -48,6 +50,12 @@
 	<string>14.0</string>
 	<key>NSAccentColorName</key>
 	<string>AccentColor</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>This app accesses your desktop folder to review and allow saving files.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>This app accesses your document folder to review and allow saving files.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>This app accesses your download folder to review and allow saving files.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2025 NeuralQuantum.ai LLC. All rights reserved.</string>
 	<key>NSMainStoryboardFile</key>
@@ -58,6 +66,8 @@
 	<true/>
 	<key>NSSupportsSuddenTermination</key>
 	<true/>
+	<key>NSSystemAdministrationUsageDescription</key>
+	<string>This app needs system adminstrative access to allow rewrite and AI tools across your system. </string>
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>
 </dict>
