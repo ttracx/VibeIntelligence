@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1261CC386D15BE049AC925FA /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAC8A00BACB5445779D25FE /* KeychainManager.swift */; };
+		7F1D27C760DF509B7A87A4DF /* ProcessingOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7ED5C510F5FAC33EF63175 /* ProcessingOverlayView.swift */; };
 		A1000001226B4A1D00000001 /* VibeIntelligenceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001226B4A1D00000010 /* VibeIntelligenceApp.swift */; };
 		A1000001226B4A1D00000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001226B4A1D00000011 /* ContentView.swift */; };
 		A1000001226B4A1D00000003 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001226B4A1D00000012 /* MenuBarView.swift */; };
@@ -21,19 +23,15 @@
 		A100000122NEW000100000003 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000122NEW000100000012 /* OnboardingView.swift */; };
 		A100000122NEW000100000004 /* QuickTransformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000122NEW000100000013 /* QuickTransformView.swift */; };
 		A100000122NEW000100000005 /* TemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000122NEW000100000014 /* TemplatesView.swift */; };
-		C63D51A3D066C2F8AB5B3D24 /* APIKeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DAE57FF984FA55169EA0528 /* APIKeysView.swift */; };
-		1261CC386D15BE049AC925FA /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAC8A00BACB5445779D25FE /* KeychainManager.swift */; };
 		A58D1188D62E43E2BAB77EAF /* OllamaManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C61A413914BAA96A566D3D6 /* OllamaManager.swift */; };
+		C63D51A3D066C2F8AB5B3D24 /* APIKeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DAE57FF984FA55169EA0528 /* APIKeysView.swift */; };
 		CB82D8FACDD1B9B90261827A /* OllamaSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */; };
-		7F1D27C760DF509B7A87A4DF /* ProcessingOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7ED5C510F5FAC33EF63175 /* ProcessingOverlayView.swift */; };
-
-
-
-
-
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0C61A413914BAA96A566D3D6 /* OllamaManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaManager.swift; sourceTree = "<group>"; };
+		3DAE57FF984FA55169EA0528 /* APIKeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeysView.swift; sourceTree = "<group>"; };
+		7F7ED5C510F5FAC33EF63175 /* ProcessingOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingOverlayView.swift; sourceTree = "<group>"; };
 		A1000001226B4A1D00000010 /* VibeIntelligenceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VibeIntelligenceApp.swift; sourceTree = "<group>"; };
 		A1000001226B4A1D00000011 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1000001226B4A1D00000012 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
@@ -51,16 +49,8 @@
 		A100000122NEW000100000012 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A100000122NEW000100000013 /* QuickTransformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickTransformView.swift; sourceTree = "<group>"; };
 		A100000122NEW000100000014 /* TemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatesView.swift; sourceTree = "<group>"; };
-		3DAE57FF984FA55169EA0528 /* APIKeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeysView.swift; sourceTree = "<group>"; };
 		DDAC8A00BACB5445779D25FE /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
-		0C61A413914BAA96A566D3D6 /* OllamaManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaManager.swift; sourceTree = "<group>"; };
 		EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaSetupView.swift; sourceTree = "<group>"; };
-		7F7ED5C510F5FAC33EF63175 /* ProcessingOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingOverlayView.swift; sourceTree = "<group>"; };
-
-
-
-
-
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,12 +91,12 @@
 				A1000001226B4A1D00000031 /* VibeIntelligence.entitlements */,
 				A1000001226B4A1D00000032 /* Info.plist */,
 				A1000001226B4A1D00000053 /* Preview Content */,
-			
 				3DAE57FF984FA55169EA0528 /* APIKeysView.swift */,
 				DDAC8A00BACB5445779D25FE /* KeychainManager.swift */,
 				0C61A413914BAA96A566D3D6 /* OllamaManager.swift */,
 				EB4CEE5D4E23163602BC083E /* OllamaSetupView.swift */,
-				7F7ED5C510F5FAC33EF63175 /* ProcessingOverlayView.swift */,);
+				7F7ED5C510F5FAC33EF63175 /* ProcessingOverlayView.swift */,
+			);
 			path = VibeIntelligence;
 			sourceTree = "<group>";
 		};
@@ -208,12 +198,12 @@
 				A1000001226B4A1D00000005 /* BrandColors.swift in Sources */,
 				A1000001226B4A1D00000006 /* VibeIntelligenceService.swift in Sources */,
 				A1000001226B4A1D00000007 /* ConfigManager.swift in Sources */,
-			
 				C63D51A3D066C2F8AB5B3D24 /* APIKeysView.swift in Sources */,
 				1261CC386D15BE049AC925FA /* KeychainManager.swift in Sources */,
 				A58D1188D62E43E2BAB77EAF /* OllamaManager.swift in Sources */,
 				CB82D8FACDD1B9B90261827A /* OllamaSetupView.swift in Sources */,
-				7F1D27C760DF509B7A87A4DF /* ProcessingOverlayView.swift in Sources */,);
+				7F1D27C760DF509B7A87A4DF /* ProcessingOverlayView.swift in Sources */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
@@ -354,7 +344,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"VibeIntelligence/Preview Content\"";
 				ENABLE_APP_SANDBOX = YES;
@@ -410,7 +400,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"VibeIntelligence/Preview Content\"";
 				ENABLE_APP_SANDBOX = YES;

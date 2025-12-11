@@ -41,7 +41,7 @@
 	<key>NSSupportsSuddenTermination</key>
 	<true/>
 	<key>NSSystemAdministrationUsageDescription</key>
-	<string>This app needs system adminstrative access to allow rewrite and AI tools across your system. </string>
+	<string>This app needs system administrative access to allow rewrite and AI tools across your system.</string>
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>
 </dict>
